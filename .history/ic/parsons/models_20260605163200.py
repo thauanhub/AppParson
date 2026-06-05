@@ -1,11 +1,9 @@
-from random import randint
-
 from django.db import models
-from django.db.models import Count
-from simple_history.models import HistoricalRecords
-from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
+
+
+
 class Chapter(models.Model):
     id = models.AutoField(primary_key=True)
     label = models.CharField(max_length=200, blank=False)
