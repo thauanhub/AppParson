@@ -24,6 +24,7 @@ class Chapter(models.Model):
     class Meta:
         verbose_name = _('Chapter')
         verbose_name_plural = _('Chapters')
+
 class ProblemManager(models.Manager):
     def random(self):
         count = self.aggregate(count=Count('id'))['count']
@@ -58,5 +59,43 @@ class Problem(models.Model):
     def str(self):
         return "%d - %s" % (self.id, self.title)
     class Meta:
-        verbosename = ('Problem')
-        verbose_nameplural = ('Problems')
+        verbose_name = ('Problem')
+        verbose_name_plural = ('Problems')
+
+class DropOutModel(models.Model):
+    model_file = models.CharField(max_length=200, blank=False) # guarda o pickle do modelo
+    #attributes = JsonField  # guarda uma lista de atributos a serem utilizados. Aí no código, cada atributo pode chamar uma função para calcular o valor daquele atributo
+    completed_chapter = models.ManyToManyField(Chapter) # modelo a ser usado quando o último capitulo completo for esse
+
+    class Meta:
+        verbose_name = _('Drop out model')
+        verbose_name_plural = _('Drop out models')
+
+    def __unicode__(self):
+        return self.model_file
+
+    def __str__(self):
+        return "%s" % self.model_file
+
+class ExerciseSet(models.Model):
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField()
+    history = HistoricalRecords()
+
+    def __unicode__(self):
+        return "%d - %s" % (self.order, self.problem)
+
+    def __str__(self):
+        return "%d - %s" % (self.order, self.problem)
+
+    class Meta:
+        verbose_name = _('Exercise Set')
+        verbose_name_plural = _('Exercises Sets')
+
+class ChapterLink(models.Model):
+    url = models.URLField(max_length=200)
+    name = models.CharField(max_length=200, null=True)
+
+    def __str__(self):
+        return self.url
