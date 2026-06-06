@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Problema de Parsons</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f7f6; }
+        .container { display: flex; gap: 20px; align-items: flex-start; }
+        
+        .caixa { 
+            border: 2px solid #ccc; 
+            border-radius: 8px;
+            padding: 10px; 
+            width: 400px; 
+            min-height: 300px; 
+            background: white; 
+        }
+
+        /* 🎨 Dica de Webdesign: Linhas guias de indentação (a cada 40px) */
+        #area-solucao {
+            background-image: repeating-linear-gradient(to right, transparent, transparent 39px, #e0e0e0 39px, #e0e0e0 40px);
+            background-position: left top;
+            background-clip: content-box;
+        }
+
+        .linha-codigo { 
+            background: #282c34; 
+            color: #abb2bf; 
+            padding: 10px 15px; 
+            margin: 5px 0; 
+            cursor: grab; 
+            font-family: monospace; 
+            border-radius: 4px; 
+            transition: margin-left 0.2s ease; /* Animação suave ao indentar */
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .linha-codigo:active { cursor: grabbing; }
+        .feedback { margin-top: 20px; font-weight: bold; font-size: 1.1em; }
+        .sucesso { color: #2e7d32; }
+        .erro { color: #d32f2f; }
+        button { padding: 10px 20px; cursor: pointer; font-size: 16px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <h2>Desafio: {{ problema.title }}</h2>
+    <p>{{ problema.content }}</p>
+
+    <div class="container">
+        <div>
+            <h3 style="margin-bottom: 10px;">Blocos Disponíveis</h3>
+            <div id="blocos-disponiveis" class="caixa">
+                {% for linha in linhas_embaralhadas %}
+                    <div class="linha-codigo" data-codigo="{{ linha }}" data-indent="0">{{ linha }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <h3 style="margin-bottom: 10px;">Sua Solução Aqui</h3>
+            <div id="area-solucao" class="caixa">
+                </div>
+        </div>
+    </div>
+
+    <button onclick="validarResposta()">Verificar Código</button>
+    <div id="mensagem" class="feedback"></div>
+
+    <script>
+        const listaDisponivel = document.getElementById('blocos-disponiveis');
+        const listaSolucao = document.getElementById('area-solucao');
+
+        // Configuração da caixa Esquerda
+        new Sortable(listaDisponivel, { 
+            group: 'parsons', 
+            animation: 150,
+            draggable: ".linha-codigo", // Força a pegar só os blocos
+            fallbackOnBody: true,       // Deixa o arrasto mais leve na tela
+            onEnd: function(evt) {
+                // Se a peça voltar pra cá, zera a indentação
+                evt.item.style.marginLeft = '0px';
+                evt.item.setAttribute('data-indent', 0);
+            }
+        });
+
+        // Configuração da caixa Direita (Com matemática exata)
+        new Sortable(listaSolucao, { 
+            group: 'parsons', 
+            animation: 150,
+            draggable: ".linha-codigo",
+            fallbackOnBody: true,
+            onEnd: function (evt) {
+                // Só calcula a indentação se o bloco foi solto dentro da área de solução
+                if (evt.to === listaSolucao && evt.originalEvent) {
+                    
+                    // 1. Pega as coordenadas exatas da caixa direita no momento do drop
+                    let limitesCaixa = listaSolucao.getBoundingClientRect();
+                    
+                    // 2. Pega a posição X do mouse (funciona no clique e no touch do celular)
+                    let mouseX = evt.originalEvent.clientX || 
+                                (evt.originalEvent.changedTouches ? evt.originalEvent.changedTouches[0].clientX : 0);
+                    
+                    // 3. Matemática: Posição do Mouse - Parede da Caixa - 10px de margem interna
+                    let deslocamentoReal = mouseX - limitesCaixa.left - 10;
+                    
+                    // 4. Calcula os "Tabs" (blocos de 40px)
+                    let nivelIndentacao = Math.max(0, Math.floor(deslocamentoReal / 40));
+                    nivelIndentacao = Math.min(nivelIndentacao, 4); // Limite de 4 níveis de aninhamento
+                    
+                    // 5. Aplica na interface
+                    evt.item.style.marginLeft = (nivelIndentacao * 40) + 'px';
+                    evt.item.setAttribute('data-indent', nivelIndentacao);
+                }
+            }
+        });
+
+        // 3. Recebendo o gabarito do Backend
+        const gabaritoOriginal = {{ gabarito_json|safe }};
+
+        // 4. Lógica de Validação
+        function validarResposta() {
+            const elementosSolucao = listaSolucao.querySelectorAll('.linha-codigo');
+            let respostaAluno = [];
+            
+            // Monta o array do aluno com o código e a indentação
+            elementosSolucao.forEach(el => {
+                respostaAluno.push({
+                    codigo: el.getAttribute('data-codigo'),
+                    indent: parseInt(el.getAttribute('data-indent'))
+                });
+            });
+
+            const divMensagem = document.getElementById('mensagem');
+
+            // Verifica se está 100% igual ao gabarito
+            if (JSON.stringify(respostaAluno) === JSON.stringify(gabaritoOriginal)) {
+                divMensagem.textContent = "🎉 Perfeito! A ordem lógica e a indentação estão corretas!";
+                divMensagem.className = "feedback sucesso";
+            } else {
+                divMensagem.textContent = "❌ Estrutura incorreta. Verifique a ordem das linhas e a indentação!";
+                divMensagem.className = "feedback erro";
+            }
+        }
+    </script>
+</body>
+</html>
