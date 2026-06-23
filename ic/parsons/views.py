@@ -40,3 +40,26 @@ def resolver_parsons(request, problem_id):
         'gabarito_json': json.dumps(gabarito) # Envia o novo formato para o JS
     }
     return render(request, 'parsons.html', context)
+
+
+
+# @login_required
+# def show_problem(request, problem_id):
+#     #try:
+#     context = get_problem(problem_id)
+    
+#     problem = problem_id
+#     exercise_sets = ExerciseSet.objects.filter(problem=problem)
+#     chapters = [es.chapter for es in exercise_sets]
+#     links = []
+#     for chapter in chapters:
+#         links.extend(chapter.link.all())
+
+#     context['links'] = links
+
+#     #except Problem.DoesNotExist:
+#         #raise Http404("Problem does not exist")
+#     return render(request, 'questions/show_problem.html', context)
+# Chamar a view show_Problem e tratar no método auxiliar, pode retornar um html diferente (show_problem_parson.html)
+# Fazer teste automatizado com playwright
+# Fazer teste de backend testcase
