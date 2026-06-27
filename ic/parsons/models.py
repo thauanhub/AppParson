@@ -100,6 +100,66 @@ class ChapterLink(models.Model):
     def __str__(self):
         return self.url
     
+class Cluster(models.Model):
+    id = models.IntegerField(primary_key=True)
+    label = models.CharField(max_length=50, blank=False)
+
+    def __unicode__(self):
+        return self.label
+
+    def __str__(self):
+        return "%d - %s" % (self.id, self.label)
+    
+class Language(models.Model):
+    #Linguagens de programação
+    name = models.CharField(max_length=20)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('Language')
+        verbose_name_plural = _('Languages')
+class Solution(models.Model):
+    content = models.TextField(blank=False)
+    header = models.TextField(blank=True, null=True)
+    problem = models.ForeignKey(Problem, on_delete=models.PROTECT)
+    link = models.URLField(blank=True, null=True)
+    retrieved_date = models.DateTimeField(blank=False, auto_now_add=True)
+    ignore = models.BooleanField(default=False)
+    tip = models.TextField(blank=True,
+                           default="#Start your python function here")
+    cluster = models.ForeignKey(Cluster, on_delete=models.SET_NULL,
+                                null=True, blank=True)
+    #Linguagens de programação
+    # language = models.ForeignKey(Language, on_delete=models.SET_DEFAULT, default=1)
+    #Tipos de retorno
+    TYPE_CHOICES = [
+        ('int', 'int'),
+        ('float', 'float'),
+        ('double', 'double'),
+        ('char', 'char'),
+        ('long', 'long'),
+        ('long long', 'long long'),
+        ('short', 'short'),
+        ('unsigned int', 'unsigned int'),
+        ('unsigned long', 'unsigned long'),
+        ('const char*', 'const char*'),
+    ]
+    return_type = models.CharField(max_length=50, choices=TYPE_CHOICES, null=True, blank=True)
+    
+    history = HistoricalRecords()
+
+    def __unicode__(self):
+        return self.problem.title
+
+    def __str__(self):
+        return self.problem.title
+
+    class Meta:
+        verbose_name = _('Solution')
+        verbose_name_plural = _('Solutions')
+
 
 # Importar as solution
 # As soluções tem que estar no solution
