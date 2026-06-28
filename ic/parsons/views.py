@@ -2,6 +2,7 @@ import random
 import json
 from django.shortcuts import render, get_object_or_404
 from parsons.models import Problem, Solution
+from parsons.get_problem import get_problem
 
 def verifica_indentacao(linha):
    
@@ -58,7 +59,25 @@ def resolver_parsons(request, problem_id):
     }
     return render(request, 'parsons.html', context)
 
+def show_problem(request, problem_id):
+     #try:
+     problema = get_object_or_404(Problem, id=problem_id, question_type='P')
+     context = get_problem(problem_id)
 
+     if problema.question_type == 'P':
+         return resolver_parsons(request, problem_id)
+    
+     #exercise_sets = ExerciseSet.objects.filter(problem=problem)
+     #chapters = [es.chapter for es in exercise_sets]
+     #links = []
+     #for chapter in chapters:
+         #links.extend(chapter.link.all())
+
+     #context['links'] = links
+
+     #except Problem.DoesNotExist:
+         #raise Http404("Problem does not exist")
+     return render(request, 'questions/show_problem.html', context)
 
 
 
