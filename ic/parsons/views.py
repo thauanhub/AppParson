@@ -37,7 +37,6 @@ def resolver_parsons(request, problem_id):
         linhas_embaralhadas.append(texto_limpo)
         
     for linha_solucao in linhas_solucao:
-        
         if not linha_solucao.strip():  # Ignora linhas totalmente vazias
             continue
         
