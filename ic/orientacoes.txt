@@ -1,0 +1,18 @@
+{% extends "questions/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load escape_doublequote %}
+{% block stylesheet %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles_parsons.css' %}" />
+{% endblock %}
+{% block content %}
+
+    -- conteudo
+
+{% endblock %}
+
+# Importar Language
+# Template seguindo o padrão do machine teaching no frontend
+# Fazer os testes automatizados para o backend
+# Fazer testes de interface
+# copiar o base.html e styles.css do machine teaching

@@ -1,157 +1,384 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Problema de Parsons</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f7f6; }
-        .container { display: flex; gap: 20px; align-items: flex-start; }
-        
-        .caixa { 
-            border: 2px solid #ccc; 
-            border-radius: 8px;
-            padding: 10px; 
-            width: 400px; 
-            min-height: 300px; 
-            background: white; 
-        }
+{% extends "base.html" %} {% load static %} {% load i18n %}
 
-        /* 🎨 Dica de Webdesign: Linhas guias de indentação (a cada 40px) */
-        #area-solucao {
-            background-image: repeating-linear-gradient(to right, transparent, transparent 39px, #e0e0e0 39px, #e0e0e0 40px);
-            background-position: left top;
-            background-clip: content-box;
-        }
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-        .linha-codigo { 
-            background: #282c34; 
-            color: #abb2bf; 
-            padding: 10px 15px; 
-            margin: 5px 0; 
-            cursor: grab; 
-            font-family: monospace; 
-            border-radius: 4px; 
-            transition: margin-left 0.2s ease; /* Animação suave ao indentar */
-            user-select: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .linha-codigo:active { cursor: grabbing; }
-        .feedback { margin-top: 20px; font-weight: bold; font-size: 1.1em; }
-        .sucesso { color: #2e7d32; }
-        .erro { color: #d32f2f; }
-        button { padding: 10px 20px; cursor: pointer; font-size: 16px; margin-top: 20px; }
-    </style>
-</head>
-<body>
+<style>
+  .parsons-container {
+    font-family: 'Inter', sans-serif;
+    width: 96%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 2.5rem;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
 
+  @media (max-width: 768px) {
+    .parsons-container {
+      padding: 1.5rem 1rem;
+      width: 100%;
+      margin: 1rem auto;
+      border-radius: 12px;
+    }
+  }
+
+  .parsons-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .parsons-header h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.5px;
+  }
+
+  @media (max-width: 768px) {
+    .parsons-header h2 {
+      font-size: 1.6rem;
+    }
+  }
+
+  .parsons-header p {
+    color: #64748b;
+    font-size: 1.15rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .workspace {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 992px) {
+    .workspace {
+      flex-direction: column;
+    }
+  }
+
+  .workspace-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .workspace-column h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .caixa {
+    flex: 1;
+    min-height: 500px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  @media (max-width: 768px) {
+    .caixa {
+      min-height: 300px;
+      padding: 1rem;
+    }
+  }
+
+  .linha-codigo {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    color: #334155;
+    cursor: grab;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    word-break: break-word;
+  }
+
+  @media (max-width: 768px) {
+    .linha-codigo {
+      font-size: 0.85rem;
+      padding: 0.8rem;
+    }
+  }
+
+  .linha-codigo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    border-left-color: #60a5fa;
+  }
+
+  .linha-codigo:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .codigo-texto {
+    flex: 1;
+  }
+
+  .sortable-ghost {
+    opacity: 0.4;
+    background: #e2e8f0;
+    border: 2px dashed #94a3b8;
+  }
+
+  /* Indentation Controls */
+  .indent-controls {
+    display: none;
+    gap: 0.5rem;
+    margin-left: 1rem;
+  }
+
+  #area-solucao .linha-codigo .indent-controls {
+    display: flex;
+  }
+
+  .indent-btn {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #475569;
+    transition: all 0.2s ease;
+  }
+
+  @media (max-width: 768px) {
+    .indent-btn {
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .indent-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+  }
+
+  .indent-btn:active {
+    background: #cbd5e1;
+  }
+
+  .action-container {
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  .btn-verificar {
+    background: linear-gradient(135deg, #5e9afb 0%, #5e9afb 100%);
+    color: white;
+    border: none;
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.5px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .btn-verificar:hover {
+    transform: translateY(-3px);
+  }
+
+  .btn-verificar:active {
+    transform: translateY(1px);
+  }
+
+  .feedback {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 1.1rem;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
+  }
+
+  .feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+    display: block;
+  }
+
+  .feedback.sucesso {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    box-shadow: 0 4px 6px -1px rgba(22, 101, 52, 0.1);
+  }
+
+  .feedback.erro {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    box-shadow: 0 4px 6px -1px rgba(153, 27, 27, 0.1);
+  }
+</style>
+
+<div class="parsons-container">
+  <div class="parsons-header">
     <h2>Desafio: {{ problema.title }}</h2>
     <p>{{ problema.content }}</p>
+  </div>
 
-    <div class="container">
-        <div>
-            <h3 style="margin-bottom: 10px;">Blocos Disponíveis</h3>
-            <div id="blocos-disponiveis" class="caixa">
-                {% for linha in linhas_embaralhadas %}
-                    <div class="linha-codigo" data-codigo="{{ linha }}" data-indent="0">{{ linha }}</div>
-                {% endfor %}
-            </div>
+  <div class="workspace">
+    <div class="workspace-column">
+      <h3>Blocos Disponíveis</h3>
+      <div id="blocos-disponiveis" class="caixa">
+        {% for linha in linhas_embaralhadas %}
+        <div class="linha-codigo" data-codigo="{{ linha }}" data-indent="0">
+          <span class="codigo-texto">{{ linha }}</span>
+          <div class="indent-controls">
+            <button class="indent-btn" onclick="mudarIndentacao(this, -1)" title="Diminuir indentação"><i
+                class="fa-solid fa-arrow-left"></i></button>
+            <button class="indent-btn" onclick="mudarIndentacao(this, 1)" title="Aumentar indentação"><i
+                class="fa-solid fa-arrow-right"></i></button>
+          </div>
         </div>
-
-        <div>
-            <h3 style="margin-bottom: 10px;">Sua Solução Aqui</h3>
-            <div id="area-solucao" class="caixa">
-                </div>
-        </div>
+        {% endfor %}
+      </div>
     </div>
 
-    <button onclick="validarResposta()">Verificar Código</button>
+    <div class="workspace-column">
+      <h3>Sua Solução Aqui</h3>
+      <div id="area-solucao" class="caixa"></div>
+    </div>
+  </div>
+
+  <div class="action-container">
+    <button class="btn-verificar" onclick="validarResposta()">Verificar Código</button>
     <div id="mensagem" class="feedback"></div>
+  </div>
+</div>
 
-    <script>
-        const listaDisponivel = document.getElementById('blocos-disponiveis');
-        const listaSolucao = document.getElementById('area-solucao');
+<script>
+  // Função para mudar indentação via botões
+  function mudarIndentacao(botao, delta) {
+    const linha = botao.closest('.linha-codigo');
+    let atual = parseInt(linha.getAttribute('data-indent')) || 0;
+    let novoIndent = Math.max(0, Math.min(atual + delta, 4));
 
-        // Configuração da caixa Esquerda
-        new Sortable(listaDisponivel, { 
-            group: 'parsons', 
-            animation: 150,
-            draggable: ".linha-codigo", // Força a pegar só os blocos
-            fallbackOnBody: true,       // Deixa o arrasto mais leve na tela
-            onEnd: function(evt) {
-                // Se a peça voltar pra cá, zera a indentação
-                evt.item.style.marginLeft = '0px';
-                evt.item.setAttribute('data-indent', 0);
-            }
-        });
+    linha.setAttribute('data-indent', novoIndent);
 
-        // Configuração da caixa Direita (Com matemática exata)
-        new Sortable(listaSolucao, { 
-            group: 'parsons', 
-            animation: 150,
-            draggable: ".linha-codigo",
-            fallbackOnBody: true,
-            onEnd: function (evt) {
-                // Só calcula a indentação se o bloco foi solto dentro da área de solução
-                if (evt.to === listaSolucao && evt.originalEvent) {
-                    
-                    // 1. Pega as coordenadas exatas da caixa direita no momento do drop
-                    let limitesCaixa = listaSolucao.getBoundingClientRect();
-                    
-                    // 2. Pega a posição X do mouse (funciona no clique e no touch do celular)
-                    let mouseX = evt.originalEvent.clientX || 
-                                (evt.originalEvent.changedTouches ? evt.originalEvent.changedTouches[0].clientX : 0);
-                    
-                    // 3. Matemática: Posição do Mouse - Parede da Caixa - 10px de margem interna
-                    let deslocamentoReal = mouseX - limitesCaixa.left - 10;
-                    
-                    // 4. Calcula os "Tabs" (blocos de 40px)
-                    let nivelIndentacao = Math.max(0, Math.floor(deslocamentoReal / 40));
-                    nivelIndentacao = Math.min(nivelIndentacao, 4); // Limite de 4 níveis de aninhamento
-                    
-                    // 5. Aplica na interface
-                    evt.item.style.marginLeft = (nivelIndentacao * 40) + 'px';
-                    evt.item.setAttribute('data-indent', nivelIndentacao);
-                }
-            }
-        });
+    // Calcula o espaçamento responsivo
+    const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
+    linha.style.marginLeft = (novoIndent * pxPerIndent) + 'px';
+  }
 
-        // 3. Recebendo o gabarito do Backend
-        const gabaritoOriginal = {{ gabarito_json|safe }};
+  document.addEventListener('DOMContentLoaded', function () {
+    const listaDisponivel = document.getElementById('blocos-disponiveis');
+    const listaSolucao = document.getElementById('area-solucao');
 
-        // 4. Lógica de Validação
-        function validarResposta() {
-            const elementosSolucao = listaSolucao.querySelectorAll('.linha-codigo');
-            let respostaAluno = [];
-            
-            // Monta o array do aluno com o código e a indentação
-            elementosSolucao.forEach(el => {
-                respostaAluno.push({
-                    codigo: el.getAttribute('data-codigo'),
-                    indent: parseInt(el.getAttribute('data-indent'))
-                });
-            });
+    // Recalcula as margens se a tela for redimensionada
+    window.addEventListener('resize', () => {
+      const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
+      document.querySelectorAll('#area-solucao .linha-codigo').forEach(linha => {
+        let indent = parseInt(linha.getAttribute('data-indent')) || 0;
+        linha.style.marginLeft = (indent * pxPerIndent) + 'px';
+      });
+    });
 
-            const divMensagem = document.getElementById('mensagem');
+    new Sortable(listaDisponivel, {
+      group: 'parsons',
+      animation: 250,
+      easing: "cubic-bezier(1, 0, 0, 1)",
+      draggable: ".linha-codigo",
+      fallbackOnBody: true,
+      ghostClass: 'sortable-ghost',
+      onEnd: function (evt) {
+        evt.item.style.marginLeft = '0px';
+        evt.item.setAttribute('data-indent', 0);
+      }
+    });
 
-            // Verifica se está 100% igual ao gabarito
-            if (JSON.stringify(respostaAluno) === JSON.stringify(gabaritoOriginal)) {
-                divMensagem.textContent = "🎉 Perfeito! A ordem lógica e a indentação estão corretas!";
-                divMensagem.className = "feedback sucesso";
-            } else {
-                divMensagem.textContent = "❌ Estrutura incorreta. Verifique a ordem das linhas e a indentação!";
-                divMensagem.className = "feedback erro";
-            }
+    new Sortable(listaSolucao, {
+      group: 'parsons',
+      animation: 250,
+      easing: "cubic-bezier(1, 0, 0, 1)",
+      draggable: ".linha-codigo",
+      fallbackOnBody: true,
+      ghostClass: 'sortable-ghost',
+      onEnd: function (evt) {
+        if (evt.to === listaSolucao && evt.originalEvent) {
+          const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
+          let limitesCaixa = listaSolucao.getBoundingClientRect();
+          let mouseX = evt.originalEvent.clientX ||
+            (evt.originalEvent.changedTouches ? evt.originalEvent.changedTouches[0].clientX : 0);
+
+          let deslocamentoReal = mouseX - limitesCaixa.left - 20;
+          let nivelIndentacao = Math.max(0, Math.floor(deslocamentoReal / pxPerIndent));
+          nivelIndentacao = Math.min(nivelIndentacao, 4);
+
+          evt.item.style.marginLeft = (nivelIndentacao * pxPerIndent) + 'px';
+          evt.item.setAttribute('data-indent', nivelIndentacao);
         }
-    </script>
-</body>
-</html>
+      }
+    });
+  });
 
-{% comment %} 
-{% extends "questions/base.html" %}
-{% load static %}
-{% load i18n %}
-{% block content %}
-Bloco de conteúdo do machineteaching, colocar no começo html.
-{% endcomment %}
+  const gabaritoOriginal = {{ gabarito_json| safe }};
+
+  function validarResposta() {
+    const elementosSolucao = document.getElementById('area-solucao').querySelectorAll('.linha-codigo');
+    let respostaAluno = [];
+
+    elementosSolucao.forEach(el => {
+      respostaAluno.push({
+        codigo: el.getAttribute('data-codigo'),
+        indent: parseInt(el.getAttribute('data-indent'))
+      });
+    });
+
+    const divMensagem = document.getElementById('mensagem');
+    divMensagem.classList.remove('show', 'sucesso', 'erro');
+
+    setTimeout(() => {
+      if (JSON.stringify(respostaAluno) === JSON.stringify(gabaritoOriginal)) {
+        divMensagem.innerHTML = "<strong>🎉 Perfeito!</strong> A ordem lógica e a indentação estão corretas!";
+        divMensagem.classList.add('sucesso', 'show');
+      } else {
+        divMensagem.innerHTML = "<strong>❌ Estrutura incorreta.</strong> Verifique a ordem das linhas e a indentação!";
+        divMensagem.classList.add('erro', 'show');
+      }
+    }, 50);
+  }
+</script>
+{% endblock %}

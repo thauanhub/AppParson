@@ -159,8 +159,3 @@ class Solution(models.Model):
     class Meta:
         verbose_name = _('Solution')
         verbose_name_plural = _('Solutions')
-
-
-# Importar as solution
-# As soluções tem que estar no solution
-# No options do Problem, colocar distratores, lá não está a resposta só as opções.
