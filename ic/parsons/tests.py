@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright, expect
 
 from parsons.models import Problem, Solution
 
-
+# Executar teste: python ic/manage.py test parsons.tests.ParsonsProblemUITest
 class ParsonsProblemUITest(StaticLiveServerTestCase):
 
     @classmethod
@@ -113,6 +113,50 @@ class ParsonsProblemUITest(StaticLiveServerTestCase):
 
         expect(linha_na_solucao).to_have_attribute("data-indent", "2")
 
+    def test_ordem_errada_da_erro(self):
+        """
+        Monta os blocos corretos, mas fora da ordem esperada da solução.
+        """
+        self.page.goto(self._url())
+
+        area_solucao = self.page.locator("#area-solucao")
+
+        # Ordem trocada: "print(a + b)" antes de "a = 1" e "b = 2"
+        for codigo in ["print(a + b)", "a = 1", "b = 2"]:
+            origem = self.page.locator(f'.linha-codigo[data-codigo="{codigo}"]').first
+            self._arrastar_para_o_final(origem, area_solucao)
+
+        self.page.click("button:has-text('Verificar Código')")
+
+        mensagem = self.page.locator("#mensagem")
+        expect(mensagem).to_have_class("feedback erro show")
+        expect(mensagem).to_contain_text("Estrutura incorreta")
+
+    def test_indentacao_errada_da_erro(self):
+        """
+        Monta os blocos na ordem correta, mas com indentação incorreta
+        em uma das linhas (usando o botão de aumentar indentação).
+        """
+        self.page.goto(self._url())
+
+        area_solucao = self.page.locator("#area-solucao")
+
+        for codigo in ["a = 1", "b = 2", "print(a + b)"]:
+            origem = self.page.locator(f'.linha-codigo[data-codigo="{codigo}"]').first
+            self._arrastar_para_o_final(origem, area_solucao)
+
+        # Indenta incorretamente a linha "b = 2", que deveria ficar no nível 0
+        linha_b = area_solucao.locator('.linha-codigo[data-codigo="b = 2"]')
+        botao_aumentar = linha_b.locator('button[title="Aumentar indentação"]')
+        botao_aumentar.click()
+
+        self.page.click("button:has-text('Verificar Código')")
+
+        mensagem = self.page.locator("#mensagem")
+        expect(mensagem).to_have_class("feedback erro show")
+        expect(mensagem).to_contain_text("Estrutura incorreta")
+        
+        
     # ---------- Helper de drag-and-drop ----------
 
     def _arrastar_para_o_final(self, origem, area_solucao):
