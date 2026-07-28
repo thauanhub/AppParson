@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, get_object_or_404
 from parsons.models import Problem, Solution
 from parsons.get_problem import get_problem
+from django.contrib.auth.decorators import login_required
 
 def verifica_indentacao(linha):
    
@@ -59,6 +60,7 @@ def resolver_parsons(request, problem_id):
     }
     return render(request, 'parsons.html', context)
 
+@login_required
 def show_problem(request, problem_id):
      #try:
      problema = get_object_or_404(Problem, id=problem_id, question_type='P')
