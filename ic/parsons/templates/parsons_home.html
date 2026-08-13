@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="parsons-home">
+    <div class="parsons-home-nav">
+      <a class="button-secondary" href="{% url 'login' %}">Voltar para login</a>
+    </div>
+    <h1>Parsons Problems</h1>
+    {% if problemas %}
+      <ul class="parsons-list">
+        {% for problema in problemas %}
+          <li>
+            <a href="{% url 'show_problem' problema.id %}">{{ problema.id }} - {{ problema.title }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Não há problemas Parsons disponíveis.</p>
+    {% endif %}
+  </div>
+{% endblock %}

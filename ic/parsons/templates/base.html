@@ -29,6 +29,7 @@
         {% endif %} {% if not perms.questions.view_userlogview %}
         <a class="menu-item" onclick="showTutorials('{{language}}')">{% blocktrans %}Tutorials{% endblocktrans %}</a>
         {% endif %}
+        <a class="menu-item" href="{% url 'parsons_home' %}">{% blocktrans %}Parsons Home{% endblocktrans %}</a>
       </ul>
 
       <li class="menu-separator"></li>
@@ -44,6 +45,7 @@
     </div>
   </div>
   <div class="content">
+    {% include 'partials/messages.html' %}
     <div class="topbar">
       <div class="topbar-left">
         <span class="close" onclick="closeMenu()">
@@ -67,7 +69,13 @@
             <br />
             <a class="link profile" href="#" style="height: 2.2rem">{% blocktrans %}Profile{% endblocktrans %}</a>
             <br />
-            <a class="link logout" href="#" style="height: 2.2rem">{% blocktrans %}Logout{% endblocktrans %}</a>
+            {% if user.is_authenticated %}
+              <a class="link logout" href="{% url 'logout' %}" style="height: 2.2rem">{% blocktrans %}Logout{% endblocktrans %}</a>
+            {% else %}
+              <a class="link logout" href="{% url 'login' %}" style="height: 2.2rem">{% blocktrans %}Login{% endblocktrans %}</a>
+              <br />
+              <a class="link logout" href="{% url 'register' %}" style="height: 2.2rem">{% blocktrans %}Register{% endblocktrans %}</a>
+            {% endif %}
           </div>
         </span>
       </div>

@@ -1,5 +1,6 @@
 from random import randint
 
+from django.conf import settings
 from django.db import models
 from django.db.models import Count
 from simple_history.models import HistoricalRecords
@@ -93,6 +94,17 @@ class ExerciseSet(models.Model):
         verbose_name = _('Exercise Set')
         verbose_name_plural = _('Exercises Sets')
 
+class OnlineClass(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.name or 'Online Class'
+
+    class Meta:
+        verbose_name = _('Online class')
+        verbose_name_plural = _('Online classes')
+
 class ChapterLink(models.Model):
     url = models.URLField(max_length=200)
     name = models.CharField(max_length=200, null=True)
@@ -120,6 +132,7 @@ class Language(models.Model):
     class Meta:
         verbose_name = _('Language')
         verbose_name_plural = _('Languages')
+        
 class Solution(models.Model):
     content = models.TextField(blank=False)
     header = models.TextField(blank=True, null=True)
@@ -159,3 +172,56 @@ class Solution(models.Model):
     class Meta:
         verbose_name = _('Solution')
         verbose_name_plural = _('Solutions')
+        
+class UserLog(models.Model):
+    OUTCOMES = (("F", "Failed"),
+                ("P", "Passed"),
+                ("S", "Skipped"))
+    ERROR_TYPE = (("C", "Conceptual"),
+                  ("S", "Syntax"),
+                  ("D", "Distraction"),
+                  ("I", "Interpretation"))
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    problem = models.ForeignKey(Problem, on_delete=models.PROTECT)
+    solution = models.TextField(blank=True)
+    outcome = models.CharField(max_length=2, choices=OUTCOMES)
+    console = models.TextField(blank=True)
+    seconds_in_code = models.IntegerField()
+    seconds_in_page = models.IntegerField()
+    seconds_to_begin = models.IntegerField()
+    solution_lines = models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    error_type = models.CharField(max_length=2, choices=ERROR_TYPE,
+                                  default="D")
+    test_case_hits = models.IntegerField(blank=True, null=True)
+    user_class = models.ForeignKey(OnlineClass, on_delete=models.PROTECT, null=True)
+    language = models.ForeignKey(Language, on_delete=models.SET_DEFAULT, default=1)
+
+    class Meta:
+        verbose_name = _('User log')
+        verbose_name_plural = _('User logs')
+
+
+class UserLogView(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, primary_key=True)
+    problem = models.ForeignKey(Problem, on_delete=models.PROTECT)
+    final_outcome = models.CharField(max_length=2)
+    timestamp = models.DateTimeField()
+    user_class = models.ForeignKey(OnlineClass, on_delete=models.PROTECT)
+    seconds_in_code = models.IntegerField()
+    seconds_in_page = models.IntegerField()
+
+    class Meta:
+        managed = False
+
+
+class UserLogError(models.Model):
+    userlog = models.ForeignKey(UserLog, on_delete=models.CASCADE, related_name='error')
+    error = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return "%s" % (self.error)
+
+    def __str__(self):
+        return "%s" % (self.error)

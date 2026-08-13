@@ -196,6 +196,22 @@
     margin-top: 3rem;
   }
 
+  .button-secondary {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1.4rem;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #1f2937;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+  }
+
+  .button-secondary:hover {
+    background: #cbd5e1;
+  }
+
   .btn-verificar {
     background: linear-gradient(135deg, #5e9afb 0%, #5e9afb 100%);
     color: white;
@@ -255,6 +271,9 @@
 
 <div class="parsons-container">
   <div class="parsons-header">
+    <div class="parsons-header-nav">
+      <a class="button-secondary" href="{% url 'parsons_home' %}">Voltar para home</a>
+    </div>
     <h2>Desafio: {{ problema.title }}</h2>
     <p>{{ problema.content }}</p>
   </div>
@@ -371,14 +390,74 @@
     divMensagem.classList.remove('show', 'sucesso', 'erro');
 
     setTimeout(() => {
-      if (JSON.stringify(respostaAluno) === JSON.stringify(gabaritoOriginal)) {
+      const passou = JSON.stringify(respostaAluno) === JSON.stringify(gabaritoOriginal);
+      if (passou) {
         divMensagem.innerHTML = "<strong>🎉 Perfeito!</strong> A ordem lógica e a indentação estão corretas!";
         divMensagem.classList.add('sucesso', 'show');
       } else {
         divMensagem.innerHTML = "<strong>❌ Estrutura incorreta.</strong> Verifique a ordem das linhas e a indentação!";
         divMensagem.classList.add('erro', 'show');
       }
+      save_log(passou ? 'P' : 'F', 0, 0, 0, 0);
     }, 50);
   }
+</script>
+{% endblock %}
+
+{% block javascript %}
+<script>
+
+    function save_log(outcome, seconds_in_code, seconds_to_begin, seconds_in_page, hits){
+
+        {% if problem.question_type == "M" %}{% for option in options %}
+        if (document.getElementById("o{{forloop.counter}}").checked) {
+            solution = "{{option}}";
+        }
+        {% endfor %}{% endif %}
+
+        language = "";
+        {% if problem.question_type == "C" %}
+        language = $('#dropdown-lang').find(":selected").text();
+        {% endif %}
+        
+        console.log("Salvando user log na url: " + '{% url 'savelog' %}');
+        $.ajax({
+            type: "POST",
+            url: '{% url 'savelog' %}',
+            data: {
+                'problem': {{problem.id}},
+                {% if problem.question_type == "C" %}
+                'solution': editor.getValue(),
+                'solution_lines': editor.lineCount(),
+                'console': document.getElementById("output").innerHTML,
+                'test_case_hits': hits,
+                'language': language,
+                {% elif problem.question_type == "M" %}
+                'solution': solution,
+                'solution_lines': 0,
+                {% elif problem.question_type == "T" %}
+                'solution': $('#text').val(),
+                'solution_lines': 0,
+                {% elif problem.question_type == "P" %}
+                'solution': '',
+                'solution_lines': 0,
+                'console': '',
+                {% endif %}
+                'outcome': outcome,
+                'seconds_in_code': seconds_in_code,
+                'seconds_to_begin': seconds_to_begin,
+                'seconds_in_page': seconds_in_page,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+    },
+        dataType: 'json',
+            success: function(data){
+            console.log('savelog response', data);
+        },
+        error: function (request, status, error) {
+            console.log('savelog error', status, error, request.responseText);
+        }
+    });
+    }
+
 </script>
 {% endblock %}
