@@ -1,0 +1,232 @@
+<!doctype html>
+{% load static i18n %}
+<html lang="pt-br">
+
+<head>
+  <title>{{title}} | Machine Teaching</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}" />
+</head>
+
+<body>
+  <div class="sidebar">
+    <a href="http://machineteaching.tech" class="brand">Machine Teaching</a>
+    <div class="menu-container">
+      <ul class="menu">
+        <!-- menu -->
+        <a class="menu-item" href="#">{% blocktrans %}Home{% endblocktrans %}</a>
+        <a class="menu-item" href="#">{% blocktrans %}Current problem{% endblocktrans %}</a>
+        <a class="menu-item" href="#">{% blocktrans %}Past problems{% endblocktrans %}</a>
+        <a class="menu-item" href="#">{% blocktrans %}Chapters{% endblocktrans %}</a>
+        {% if perms.questions.view_userlogview %}
+        <a class="menu-item" href="#">{% blocktrans %}Classes{% endblocktrans %}</a>
+        <a class="menu-item" href="#">OverCode</a>
+        {% endif %}
+        <a class="menu-item" href="{% if perms.questions.view_userlogview %}#{% else %}#{% endif %}">{% blocktrans %}Outcomes{% endblocktrans %}</a>
+        {% if SHOW_SATISFACTION_FORM %}
+        <a class="menu-item" href="#" target="_blank">{% blocktrans %}Satisfaction Form{% endblocktrans %}</a>
+        {% endif %} {% if not perms.questions.view_userlogview %}
+        <a class="menu-item" onclick="showTutorials('{{language}}')">{% blocktrans %}Tutorials{% endblocktrans %}</a>
+        {% endif %}
+      </ul>
+
+      <li class="menu-separator"></li>
+      <div class="menu-title">
+        {% blocktrans %}Chapters{% endblocktrans %}
+      </div>
+      <ul class="menu mobile_menu">
+        <!-- chapters -->
+        {% for chapter in available_chapters %}
+        <a class="menu-item" href="#">{{chapter.label}}</a>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="close" onclick="closeMenu()">
+          <div class="menu-icon">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </span>
+        <span class="title">{{ title }}</span>
+      </div>
+      <div class="topbar-right">
+        <span class="name">{% if user.first_name %} {% blocktrans %}Hello{% endblocktrans %},
+          {{ user.first_name }} {{ user.last_name }} {% endif %}<span>></span>
+          <div class="card dropdown">
+            {% if perms.questions.view_userlogview %}
+            <a class="link" href="{% url 'admin:index' %}" style="height: 2.2rem; margin-bottom: 2rem">{% blocktrans %}Administration{% endblocktrans %}</a>
+            {% else %}
+            <a class="link" href="#" style="height: 2.2rem; margin-bottom: 2rem">{% blocktrans %}Change class{% endblocktrans %}</a>
+            {% endif %}
+            <br />
+            <a class="link profile" href="#" style="height: 2.2rem">{% blocktrans %}Profile{% endblocktrans %}</a>
+            <br />
+            <a class="link logout" href="#" style="height: 2.2rem">{% blocktrans %}Logout{% endblocktrans %}</a>
+          </div>
+        </span>
+      </div>
+    </div>
+
+    <!-- Banner with a link to answer the Satisfaction Form, to be used in the last part of the semester. -->
+    {% if SHOW_SATISFACTION_FORM %}
+    <div style="width: 100%">
+      <a href="#" target="_blank" class="link-to-forms">{% blocktrans %}Answer the satisfaction form!{% endblocktrans %}</a>
+    </div>
+    {% endif %}
+
+    <!-- content -->
+    <div class="layout-content">{% block content %} {% endblock %}</div>
+
+    <!-- footer -->
+    <div class="footer" style="border-bottom: none">
+      <div class="footer-left">
+        <span class="footer-brand">Machine Teaching</span><span class="change-language"
+          onclick="changeLanguage('{{language}}')">
+          {% if language == 'en' %}Português {% else %}English{% endif %}
+          <img src="{% static 'img/earth.png' %}" /></span>
+      </div>
+      <div class="footer-right">
+        {% blocktrans %}Check the {% endblocktrans %}
+        <span onclick="showConditions('{{language}}')">
+          {% blocktrans %}Terms and Conditions{% endblocktrans %}
+        </span>
+        {% blocktrans %}and the {% endblocktrans %}
+        <span onclick="showPrivacy('{{language}}')">
+          {% blocktrans %}Privacy Policy{% endblocktrans %}
+        </span>
+        |
+        <span>
+          <a href="#">{% blocktrans %}About this research{% endblocktrans %}</a>
+        </span>
+        |
+        <span onclick="showTutorials('{{language}}')">
+          {% blocktrans %}Tutorials{% endblocktrans %}
+        </span>
+        | © 2021 {% blocktrans %}GPL-3.0 License{% endblocktrans %}:
+        <a href="http://machineteaching.tech">machineteaching.tech</a>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <!-- scripts -->
+  <script type="text/javascript">
+    //logos
+    const ufrj = '{% static "img/logo/ufrj.png" %}';
+    const cnpq = '{% static "img/logo/cnpq.svg" %}';
+    const faperj = '{% static "img/logo/faperj.jpg" %}';
+    const dcc = '{% static "img/logo/dcc.png" %}';
+    const coppe = '{% static "img/logo/coppe.jpg" %}';
+    const pesc = '{% static "img/logo/pesc.png" %}';
+    const reditus = '{% static "img/logo/reditus.png" %}';
+    const unialcalá = '{% static "img/logo/unialcalá.png" %}';
+
+    const laura = '{% static "img/equipe/laura.png" %}';
+    const carla = '{% static "img/equipe/carla.png" %}';
+    const carlos = '{% static "img/equipe/carlos.png" %}';
+    const joao = '{% static "img/equipe/joao.jpg" %}';
+    const hugo = '{% static "img/equipe/hugo.png" %}';
+    const gabriel = '{% static "img/equipe/gabriel.png" %}';
+    const arthur = '{% static "img/equipe/arthur.png" %}';
+
+    const pdf = '{% static "pdf/dicas_MT.pdf" %}';
+
+    const close = "{% blocktrans %}Close{% endblocktrans %}";
+  </script>
+  <!--       <script src="https://cdn.jsdelivr.net/pyodide/v0.17.0/full/pyodide.js"></script> -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js" type="text/javascript"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js"></script>
+  <script src="{% static 'vendor/codemirror-5.58.2/lib/codemirror-repl.js' %}"></script>
+  <script src="{% static 'vendor/codemirror-5.58.2/lib/codemirror.js' %}"></script>
+  <script src="{% static 'vendor/codemirror-5.58.2/mode/python/python.js' %}"></script>
+  <script src="{% static 'vendor/codemirror-5.58.2/mode/julia/julia.js' %}"></script>
+  <script src="{% static 'vendor/codemirror-5.58.2/mode/clike/clike.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.2/math.js"></script>
+  <script src="{% static 'js/skulpt.min.js' %}" type="text/javascript"></script>
+  <script src="{% static 'js/skulpt-stdlib.js' %}" type="text/javascript"></script>
+  <script type="text/javascript" charset="utf8"
+    src="http://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="{% static 'js/script.js' %}"></script>
+  <script src="{% static 'js/sculpt.js' %}"></script>
+  <script src="{% static 'js/footer.js' %}"></script>
+  <!-- <script src="jquery.min.js"></script> -->
+  <!-- <script src="bootstrap-tour-standalone.min.js"></script> -->
+  {% block javascript %} {% endblock %}
+  <script type="text/javascript">
+    //strategies
+    $("[name='sequential']").on("click", function () {
+      $.ajax({
+        type: "GET",
+        url: "#",
+        data: {
+          sequential: $("[name='sequential']:checked").val(),
+        },
+        dataType: "json",
+        success: function (data) {
+          console.log("status: " + data["status"]);
+          window.location.href = "#";
+        },
+        error: function (request, status, error) {
+          console.log(request.status);
+        },
+      });
+    });
+
+    function register() {
+      $.ajax({
+        type: "GET",
+        url: '#',
+        data: { course: $('[name="course"]').val() },
+        dataType: "json",
+        success: function (data) {
+          console.log("status: " + data["status"]);
+        },
+        error: function (request, status, error) {
+          console.log(request.status);
+        },
+      });
+      $(".bg2.course").hide();
+    }
+
+    function registerUniversity() {
+      $.ajax({
+        type: "GET",
+        url: '#',
+        data: {
+          university: $('[name="university"]').val(),
+          registration: $('[name="registration"]').val(),
+        },
+        dataType: "json",
+        success: function (data) {
+          console.log("status: " + data["status"]);
+        },
+        error: function (request, status, error) {
+          console.log(request.status);
+        },
+      });
+      $(".bg2.university").hide();
+    }
+
+    $("#id_course").on("change", function () {
+      new_value = $(this).val();
+      if (new_value == "Outro") {
+        $('[name="course"]').val("").show();
+      } else {
+        $('[name="course"]').val(new_value).hide();
+      }
+    });
+  </script>
+</body>
+
+</html>

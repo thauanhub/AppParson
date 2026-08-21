@@ -1,14 +1,9 @@
 import random
 import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.forms import UserCreationForm
-from django.http import HttpResponse
-from parsons.models import Problem, Solution, Language
-from parsons.get_problem import LOGGER, get_problem
+from django.shortcuts import render, get_object_or_404
+from parsons.models import Problem, Solution
+from parsons.get_problem import get_problem
 from django.contrib.auth.decorators import login_required
-from .forms import UserLogForm
 
 def verifica_indentacao(linha):
    
@@ -60,38 +55,12 @@ def resolver_parsons(request, problem_id):
 
     context = {
         'problema': problema,
-        'problem': problema,
         'linhas_embaralhadas': linhas_embaralhadas,
         'gabarito_json': json.dumps(gabarito) # Envia o novo formato para o JS
     }
     return render(request, 'parsons.html', context)
 
-@login_required
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Cadastro realizado com sucesso! Faça login agora.')
-            return redirect('login')
-        else:
-            messages.error(request, 'Erro no cadastro. Verifique os dados e tente novamente.')
-    else:
-        form = UserCreationForm()
-
-    return render(request, 'registration/register.html', {'form': form})
-
-
-@login_required
-def parsons_home(request):
-    problemas = Problem.objects.filter(question_type='P').order_by('id')
-    return render(request, 'parsons_home.html', {
-        'title': 'Parsons Home',
-        'problemas': problemas,
-    })
-
-
-@login_required
+#@login_required
 def show_problem(request, problem_id):
      #try:
      problema = get_object_or_404(Problem, id=problem_id, question_type='P')
@@ -134,32 +103,3 @@ def show_problem(request, problem_id):
 # Chamar a view show_Problem e tratar no método auxiliar, pode retornar um html diferente (show_problem_parson.html)
 # Fazer teste automatizado com playwright
 # Fazer teste de backend testcase
-
-@login_required
-def save_user_log(request):
-    # if request.POST['language'] not in supported_languages:
-        # return JsonResponse({'status': 'failed', 'message': 'Language not supported'})
-    request.POST = request.POST.copy()  #Criando uma cópia de request.POST, pois ele é imutável
-    request.POST.pop('language', None)
-    default_language, created = Language.objects.get_or_create(name='Unknown')
-    if created:
-        LOGGER.debug('Created default language Unknown with id %s', default_language.id)
-    request.POST['language'] = str(default_language.id)
-    form = UserLogForm(request.POST)
-    LOGGER.debug("Log received for user %s with outcome %s: %s",
-                 request.user,
-                 request.POST.get('outcome'),
-                 request.POST.get('solution'))
-    if form.is_valid():
-        log = form.save(commit=False)
-        log.user = request.user
-        log.user_class = None
-        if hasattr(request.user, 'userprofile'):
-            try:
-                log.user_class = request.user.userprofile.user_class
-            except Exception:
-                pass
-        log.save()
-        return JsonResponse({'status': 'success'})
-    LOGGER.debug("Log failed: %s", form.errors)
-    return JsonResponse({'status': 'failed', 'errors': form.errors})

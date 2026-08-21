@@ -16,3 +16,11 @@
 # Fazer os testes automatizados para o backend
 # Fazer testes de interface
 # copiar o base.html e styles.css do machine teaching
+
+
+# Colocar o tipo de error no userlog
+# Refazer os teste com login
+# Outro tipo de problema de parson (Preencher opção de código)
+# Executar o código para comparar com o resultado com a solução
+# Fazer outro módulo com parsons faded
+# Execução de código ja existe no Machine Teaching, só saber como usar no protótipo
