@@ -4,7 +4,6 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.forms import UserCreationForm
-from django.http import HttpResponse
 from parsons.models import Problem, Solution, Language
 from parsons.get_problem import LOGGER, get_problem
 from django.contrib.auth.decorators import login_required
@@ -66,21 +65,32 @@ def resolver_parsons(request, problem_id):
     }
     return render(request, 'parsons.html', context)
 
-@login_required
 def register(request):
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Cadastro realizado com sucesso! Faça login agora.',
+                    'redirect_url': '/login/',
+                })
             messages.success(request, 'Cadastro realizado com sucesso! Faça login agora.')
             return redirect('login')
         else:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors,
+                }, status=400)
             messages.error(request, 'Erro no cadastro. Verifique os dados e tente novamente.')
     else:
         form = UserCreationForm()
 
     return render(request, 'registration/register.html', {'form': form})
-
 
 @login_required
 def parsons_home(request):

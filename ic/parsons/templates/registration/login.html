@@ -1,12 +1,43 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
   <div class="login-container">
     <h1>Login</h1>
-    <form method="post" action="{% url 'login' %}">
+
+    {% if form.non_field_errors %}
+      <div class="form-errors">
+        {% for error in form.non_field_errors %}
+          <p class="field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}" novalidate id="login-form">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Entrar</button>
+
+      <div class="form-group">
+        <label for="{{ form.username.id_for_label }}">Nome de usuário</label>
+        {{ form.username }}
+        {% for error in form.username.errors %}
+          <p class="field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.password.id_for_label }}">Senha</label>
+        {{ form.password }}
+        {% for error in form.password.errors %}
+          <p class="field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">Entrar</button>
     </form>
+
+    <p style="margin-top: 1rem;">
+      Não tem uma conta?
+      <a href="{% url 'register' %}">Cadastre-se aqui</a>.
+    </p>
   </div>
 {% endblock %}

@@ -1,13 +1,15 @@
 import os
-os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
+from django.contrib.auth import get_user_model
+os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
+from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from playwright.sync_api import sync_playwright, expect
 
 from parsons.models import Problem, Solution
 
-# Executar teste: python ic/manage.py test parsons.tests.ParsonsProblemUITest
+#Rodar testes: python ic/manage.py test parsons.tests.ParsonsProblemUITest
 class ParsonsProblemUITest(StaticLiveServerTestCase):
 
     @classmethod
@@ -23,9 +25,8 @@ class ParsonsProblemUITest(StaticLiveServerTestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.page = self.browser.new_page()
+        self.user = get_user_model().objects.create_user(username='testuser', password='senha123')
 
-        # Options com distrator incluído.
         self.options_texto = "a = 1\nb = 2\nprint(a + b)\nc = 3  # distrator"
         self.problema = Problem.objects.create(
             title="Teste",
@@ -38,6 +39,20 @@ class ParsonsProblemUITest(StaticLiveServerTestCase):
             content="a = 1\nb = 2\nprint(a + b)",
         )
 
+        # Cria a página do navegador
+        self.page = self.browser.new_page()
+
+        # Autentica o CLIENT de teste (gera o cookie de sessão no banco)
+        self.client.force_login(self.user)
+
+        # Injeta o mesmo cookie de sessão no navegador real do Playwright
+        session_cookie = self.client.cookies[settings.SESSION_COOKIE_NAME]
+        self.page.context.add_cookies([{
+            "name": settings.SESSION_COOKIE_NAME,
+            "value": session_cookie.value,
+            "url": self.live_server_url,
+        }])
+
     def tearDown(self):
         self.page.close()
 
@@ -46,6 +61,18 @@ class ParsonsProblemUITest(StaticLiveServerTestCase):
 
     # ---------- Testes ----------
 
+    def test_parsons_home(self):
+        url_home = self.live_server_url + reverse('parsons_home')
+        self.page.goto(url_home)
+        # self.page.wait_for_timeout(3000)
+
+
+        # Garante que a página carregou com status 200 e está na URL certa
+        expect(self.page).to_have_url(url_home)
+
+        # Valida se o título ou o texto do problema criado no setUp aparece na listagem
+        expect(self.page.locator("body")).to_contain_text(self.problema.title)
+    
     def test_pagina_carrega_com_todos_os_blocos(self):
         self.page.goto(self._url())
 

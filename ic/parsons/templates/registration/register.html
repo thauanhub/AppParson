@@ -1,12 +1,168 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
   <div class="login-container">
-    <h1>Register</h1>
-    <form method="post">
+    <h1>Cadastro</h1>
+
+    <form method="post" action="{% url 'register' %}" novalidate id="register-form">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Create account</button>
+
+      <div class="form-group">
+        <label for="{{ form.username.id_for_label }}">Nome de usuário</label>
+        {{ form.username }}
+        <p class="field-error" id="error-username"></p>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.password1.id_for_label }}">Senha</label>
+        {{ form.password1 }}
+        <p class="field-error" id="error-password1"></p>
+
+        <ul class="criteria-list" id="password-criteria">
+          <li data-rule="length" class="pending">Pelo menos 8 caracteres</li>
+          <li data-rule="not-numeric" class="pending">Não pode ser totalmente numérica</li>
+          <li data-rule="not-username" class="pending">Não pode ser muito semelhante ao seu nome de usuário</li>
+        </ul>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.password2.id_for_label }}">Confirmar senha</label>
+        {{ form.password2 }}
+        <p class="field-error" id="error-password2"></p>
+
+        <ul class="criteria-list" id="match-criteria">
+          <li data-rule="match" class="pending">As senhas coincidem</li>
+        </ul>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">Criar conta</button>
     </form>
+
+    <p style="margin-top: 1rem;">
+      Já possui uma conta?
+      <a href="{% url 'login' %}">Faça login aqui</a>.
+    </p>
   </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("register-form");
+    const submitBtn = document.getElementById("submit-btn");
+
+    const usernameInput = document.getElementById("{{ form.username.id_for_label }}");
+    const password1Input = document.getElementById("{{ form.password1.id_for_label }}");
+    const password2Input = document.getElementById("{{ form.password2.id_for_label }}");
+    const generalErrors = document.getElementById("general-errors");
+
+    function clearFieldErrors() {
+      document.querySelectorAll(".field-error").forEach(el => el.textContent = "");
+      if (generalErrors) generalErrors.innerHTML = "";
+    }
+
+    function showFieldErrors(errors) {
+      clearFieldErrors();
+      for (const field in errors) {
+        if (field === "__all__" || field === "non_field_errors") {
+          errors[field].forEach(err => {
+            const p = document.createElement("p");
+            p.className = "field-error";
+            p.textContent = err.message || err;
+            generalErrors.appendChild(p);
+          });
+        } else {
+          const el = document.getElementById("error-" + field);
+          if (el) {
+            el.textContent = errors[field].map(e => e.message || e).join(" ");
+          }
+        }
+      }
+    }
+
+    function getCookie(name) {
+      const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return match ? match.pop() : '';
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      submitBtn.disabled = true;
+
+      const formData = new FormData(form);
+
+      fetch(form.action, {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      })
+        .then(response => response.json().then(data => ({ status: response.status, data })))
+        .then(({ status, data }) => {
+          submitBtn.disabled = false;
+          if (status === 200 && data.success) {
+            // Redireciona imediatamente sem popup
+            window.location.href = data.redirect_url || "{% url 'login' %}";
+          } else {
+            showFieldErrors(data.errors || {});
+          }
+        })
+        .catch(err => {
+          submitBtn.disabled = false;
+          if (generalErrors) {
+            generalErrors.innerHTML = '<p class="field-error">Erro de conexão. Tente novamente em instantes.</p>';
+          }
+          console.error(err);
+        });
+    });
+
+    // Checklist em tempo real
+    function setState(li, isValid) {
+      li.classList.remove("pending", "valid", "invalid");
+      li.classList.add(isValid ? "valid" : "invalid");
+    }
+
+    function checkPasswordRules() {
+      const pwd = password1Input.value;
+      const username = usernameInput.value.trim().toLowerCase();
+
+      const lengthLi = document.querySelector('[data-rule="length"]');
+      const numericLi = document.querySelector('[data-rule="not-numeric"]');
+      const usernameLi = document.querySelector('[data-rule="not-username"]');
+
+      if (pwd.length === 0) {
+        [lengthLi, numericLi, usernameLi].forEach(li => {
+          li.classList.remove("valid", "invalid");
+          li.classList.add("pending");
+        });
+      } else {
+        setState(lengthLi, pwd.length >= 8);
+        setState(numericLi, !/^\d+$/.test(pwd));
+        const pwdLower = pwd.toLowerCase();
+        const tooSimilar = username.length > 0 && (pwdLower.includes(username) || username.includes(pwdLower));
+        setState(usernameLi, !tooSimilar);
+      }
+      checkMatch();
+    }
+
+    function checkMatch() {
+      const matchLi = document.querySelector('[data-rule="match"]');
+      const pwd1 = password1Input.value;
+      const pwd2 = password2Input.value;
+      if (pwd2.length === 0) {
+        matchLi.classList.remove("valid", "invalid");
+        matchLi.classList.add("pending");
+      } else {
+        setState(matchLi, pwd1 === pwd2 && pwd1.length > 0);
+      }
+    }
+
+    password1Input.addEventListener("input", checkPasswordRules);
+    usernameInput.addEventListener("input", checkPasswordRules);
+    password2Input.addEventListener("input", checkMatch);
+  });
+</script>
 {% endblock %}
