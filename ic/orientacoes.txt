@@ -24,3 +24,8 @@
 # Executar o código para comparar com o resultado com a solução
 # Fazer outro módulo com parsons faded
 # Execução de código ja existe no Machine Teaching, só saber como usar no protótipo
+
+
+
+login: usuarioteste
+senha: 12345678.

@@ -6,4 +6,4 @@ from .models import UserLog
 class UserLogForm(ModelForm):
     class Meta:
         model = UserLog
-        exclude = ['timestamp', 'user', 'error_type', 'user_class']
+        exclude = ['timestamp', 'user', 'user_class']

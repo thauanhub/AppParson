@@ -1,0 +1,6 @@
+inclusão do tipo de erro de ordenação.
+mudança no campo de erro_type para blank e null.
+se o exercicio passou, fica sem erro.
+A limitação de diferentes erros porque ele só faz uma validação pra ver se as strings estão iguais. Sugestão:
+ - Fazer um método para mapear diferentes erros como distração ou indentação.
+ - Deixar sem tipo de erro. Ou seja, só erro de ordenação ou null.

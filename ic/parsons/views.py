@@ -76,7 +76,7 @@ def register(request):
                 return JsonResponse({
                     'success': True,
                     'message': 'Cadastro realizado com sucesso! Faça login agora.',
-                    'redirect_url': '/login/',
+                    'redirect_url': '/accounts/login/',
                 })
             messages.success(request, 'Cadastro realizado com sucesso! Faça login agora.')
             return redirect('login')
@@ -163,6 +163,7 @@ def save_user_log(request):
     if form.is_valid():
         log = form.save(commit=False)
         log.user = request.user
+        log.error_type = request.POST.get('error_type') or None
         log.user_class = None
         if hasattr(request.user, 'userprofile'):
             try:

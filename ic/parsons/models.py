@@ -180,7 +180,8 @@ class UserLog(models.Model):
     ERROR_TYPE = (("C", "Conceptual"),
                   ("S", "Syntax"),
                   ("D", "Distraction"),
-                  ("I", "Interpretation"))
+                  ("I", "Interpretation"),
+                  ("O", "Ordenation"))
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     problem = models.ForeignKey(Problem, on_delete=models.PROTECT)
@@ -193,7 +194,7 @@ class UserLog(models.Model):
     solution_lines = models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
     error_type = models.CharField(max_length=2, choices=ERROR_TYPE,
-                                  default="D")
+                                  blank=True, null=True)
     test_case_hits = models.IntegerField(blank=True, null=True)
     user_class = models.ForeignKey(OnlineClass, on_delete=models.PROTECT, null=True)
     language = models.ForeignKey(Language, on_delete=models.SET_DEFAULT, default=1)
