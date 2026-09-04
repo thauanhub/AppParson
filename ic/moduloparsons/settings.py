@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'parsons',
+    'parsons_faded',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

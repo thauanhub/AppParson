@@ -20,6 +20,7 @@ from parsons import views as parsons_views
 
 urlpatterns = [
     path("parsons/", include("parsons.urls")),
+    path("parsons_faded/", include("parsons_faded.urls")),
     path("accounts/register/", parsons_views.register, name="register"),
     path("accounts/", include("django.contrib.auth.urls")),
     path('admin/', admin.site.urls),

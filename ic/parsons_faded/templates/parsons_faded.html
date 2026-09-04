@@ -1,0 +1,701 @@
+{% extends "base.html" %} {% load static %} {% load i18n %} {% block content %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<style>
+  .parsons-container {
+    font-family: "Inter", sans-serif;
+    width: 96%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 2.5rem;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    .parsons-container {
+      padding: 1.5rem 1rem;
+      width: 100%;
+      margin: 1rem auto;
+      border-radius: 12px;
+    }
+  }
+
+  .parsons-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .parsons-header h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.5px;
+  }
+
+  @media (max-width: 768px) {
+    .parsons-header h2 {
+      font-size: 1.6rem;
+    }
+  }
+
+  .parsons-header p {
+    color: #64748b;
+    font-size: 1.15rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .fade-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem 1.2rem;
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .workspace {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 992px) {
+    .workspace {
+      flex-direction: column;
+    }
+  }
+
+  .workspace-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .workspace-column h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .caixa {
+    flex: 1;
+    min-height: 500px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  @media (max-width: 768px) {
+    .caixa {
+      min-height: 300px;
+      padding: 1rem;
+    }
+  }
+
+  .linha-codigo {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-family: "Fira Code", "Courier New", Courier, monospace;
+    font-size: 1rem;
+    color: #334155;
+    cursor: grab;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    word-break: break-word;
+  }
+
+  @media (max-width: 768px) {
+    .linha-codigo {
+      font-size: 0.85rem;
+      padding: 0.6rem;
+    }
+  }
+
+  .linha-codigo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    border-left-color: #0ea5e9;
+  }
+
+  .linha-codigo:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .linha-grip {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .linha-codigo:hover .linha-grip {
+    color: #94a3b8;
+  }
+
+  .codigo-texto {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
+
+  .seg-texto {
+    white-space: pre-wrap;
+  }
+
+  /* Inputs dos trechos apagados */
+  .fade-input {
+    font-family: "Fira Code", "Courier New", Courier, monospace;
+    font-size: 1rem;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px 10px;
+    min-width: 130px;
+    width: 130px;
+    outline: none;
+    cursor: text;
+    transition: all 0.2s ease;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  .fade-input::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+
+  .fade-input:focus {
+    background: #ffffff;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  }
+
+  .fade-input-linha {
+    width: 100%;
+    min-width: 100%;
+    padding: 0.5rem 0.9rem;
+  }
+
+  .fade-input.input-errado {
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #b91c1c;
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .sortable-ghost {
+    opacity: 0.4;
+    background: #e2e8f0;
+    border: 2px dashed #94a3b8;
+  }
+
+  /* Indentation Controls */
+  .indent-controls {
+    display: none;
+    gap: 0.5rem;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  #area-solucao .linha-codigo .indent-controls {
+    display: flex;
+  }
+
+  .indent-btn {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #475569;
+    transition: all 0.2s ease;
+  }
+
+  @media (max-width: 768px) {
+    .indent-btn {
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .indent-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+  }
+
+  .indent-btn:active {
+    background: #cbd5e1;
+  }
+
+  .action-container {
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  .button-secondary {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1.4rem;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #1f2937;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+  }
+
+  .button-secondary:hover {
+    background: #cbd5e1;
+  }
+
+  .parsons-header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .exemplo-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .exemplo-link {
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .exemplo-link:hover {
+    background: #e2e8f0;
+  }
+
+  .exemplo-ativo {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+    cursor: default;
+  }
+
+  .exemplo-ativo:hover {
+    background: #0ea5e9;
+  }
+
+  .btn-verificar {
+    background: linear-gradient(135deg, #5e9afb 0%, #5e9afb 100%);
+    color: white;
+    border: none;
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.5px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .btn-verificar:hover {
+    transform: translateY(-3px);
+  }
+
+  .btn-verificar:active {
+    transform: translateY(1px);
+  }
+
+  .feedback {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 1.1rem;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
+  }
+
+  .feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+    display: block;
+  }
+
+  .feedback.sucesso {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    box-shadow: 0 4px 6px -1px rgba(22, 101, 52, 0.1);
+  }
+
+  .feedback.erro {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    box-shadow: 0 4px 6px -1px rgba(153, 27, 27, 0.1);
+  }
+</style>
+
+<div class="parsons-container">
+  <div class="parsons-header">
+    <div class="parsons-header-nav">
+      <a class="button-secondary" href="{% url 'parsons_faded_home' %}"
+        >Voltar ao início</a
+      >
+      <div class="exemplo-nav">
+        {% for p in problemas_disponiveis %}
+        <a
+          class="exemplo-link{% if p.id == problema.id %} exemplo-ativo{% endif %}"
+          href="{% url 'parsons_faded_problem' p.id %}"
+          >Exemplo {{ p.id }}: {{ p.title }}</a
+        >
+        {% endfor %}
+      </div>
+    </div>
+    <h2>Desafio: {{ problema.title }}</h2>
+    <p>{{ problema.content }}</p>
+  </div>
+
+  <div class="workspace">
+    <div class="workspace-column">
+      <h3>Blocos Disponíveis</h3>
+      <div id="blocos-disponiveis" class="caixa">
+        {% for linha in linhas_embaralhadas %}
+        <div
+          class="linha-codigo"
+          data-id="{{ linha.id }}"
+          data-indent="0"
+        >
+          <i class="fa-solid fa-grip-vertical linha-grip"></i>
+          <span class="codigo-texto">
+            {% for p in linha.partes %}
+              {% if p.tipo == 'texto' %}
+                <span class="seg-texto">{{ p.texto }}</span>
+              {% elif p.linha_inteira %}
+                <input
+                  class="fade-input fade-input-linha"
+                  data-resposta="{{ p.resposta }}"
+                  placeholder="{{ p.placeholder }}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              {% else %}
+                <input
+                  class="fade-input"
+                  data-resposta="{{ p.resposta }}"
+                  placeholder="{{ p.placeholder }}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              {% endif %}
+            {% endfor %}
+          </span>
+          <div class="indent-controls">
+            <button
+              class="indent-btn"
+              onclick="mudarIndentacao(this, -1)"
+              title="Diminuir indentação"
+            >
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button
+              class="indent-btn"
+              onclick="mudarIndentacao(this, 1)"
+              title="Aumentar indentação"
+            >
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="workspace-column">
+      <h3>Sua Solução Aqui</h3>
+      <div id="area-solucao" class="caixa"></div>
+    </div>
+  </div>
+
+  <div class="action-container">
+    <button class="btn-verificar" onclick="validarResposta()">
+      Verificar Código
+    </button>
+    <div id="mensagem" class="feedback"></div>
+  </div>
+</div>
+
+<script>
+  // Função para mudar indentação via botões
+  function mudarIndentacao(botao, delta) {
+    const linha = botao.closest('.linha-codigo');
+    let atual = parseInt(linha.getAttribute('data-indent')) || 0;
+    let novoIndent = Math.max(0, Math.min(atual + delta, 4));
+
+    linha.setAttribute('data-indent', novoIndent);
+
+    // Calcula o espaçamento responsivo
+    const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
+    linha.style.marginLeft = (novoIndent * pxPerIndent) + 'px';
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const listaDisponivel = document.getElementById('blocos-disponiveis');
+    const listaSolucao = document.getElementById('area-solucao');
+    let ultimaPosicaoX = null;
+
+    // Recalcula as margens se a tela for redimensionada
+    window.addEventListener('resize', () => {
+      const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
+      document.querySelectorAll('#area-solucao .linha-codigo').forEach(linha => {
+        let indent = parseInt(linha.getAttribute('data-indent')) || 0;
+        linha.style.marginLeft = (indent * pxPerIndent) + 'px';
+      });
+    });
+
+    const filtroInterativo = 'input, button, .indent-controls';
+    let arrastando = false;
+
+    // Proteção para os inputs "faded": o SortableJS (com filter ou não) pode
+    // interceptar o mousedown esquerdo e impedir o input de receber foco.
+    // Este listener roda na fase de CAPTURA (antes do Sortable, que escuta
+    // no container em bubble) e corta a propagação quando o clique começa
+    // dentro de um input, deixando o comportamento padrão do navegador
+    // (focar o input) intacto. O botão direito nunca foi afetado porque o
+    // Sortable o ignora por padrão.
+    function protegerCliqueInput(e, alvo) {
+      const inp = alvo && alvo.closest ? alvo.closest('.fade-input') : null;
+      if (inp) {
+        e.stopPropagation();
+      }
+    }
+    document.addEventListener('mousedown', function (e) {
+      protegerCliqueInput(e, e.target);
+    }, true);
+    document.addEventListener('touchstart', function (e) {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      const el = document.elementFromPoint(t.clientX, t.clientY);
+      protegerCliqueInput(e, el);
+    }, true);
+    document.addEventListener('pointerdown', function (e) {
+      protegerCliqueInput(e, e.target);
+    }, true);
+
+    // Rastreia a posição horizontal do mouse enquanto uma linha está sendo
+    // arrastado. Durante o drag nativo do navegador os eventos de
+    // mouse/pointer normais não disparam, mas dragover sim; em modo
+    // fallback (touch), pointermove é o caminho.
+    listaSolucao.addEventListener('dragover', function (e) {
+      ultimaPosicaoX = e.clientX;
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (arrastando) {
+        ultimaPosicaoX = e.clientX;
+      }
+    });
+
+    new Sortable(listaDisponivel, {
+      group: 'parsons',
+      animation: 250,
+      easing: "cubic-bezier(1, 0, 0, 1)",
+      draggable: ".linha-codigo",
+      filter: filtroInterativo,
+      fallbackOnBody: true,
+      ghostClass: 'sortable-ghost',
+      onStart: function () {
+        arrastando = true;
+      },
+      onEnd: function (evt) {
+        arrastando = false;
+        if (evt.to === listaDisponivel) {
+          evt.item.style.marginLeft = '0px';
+          evt.item.setAttribute('data-indent', 0);
+        }
+      }
+    });
+
+    new Sortable(listaSolucao, {
+      group: 'parsons',
+      animation: 250,
+      easing: "cubic-bezier(1, 0, 0, 1)",
+      draggable: ".linha-codigo",
+      filter: filtroInterativo,
+      fallbackOnBody: true,
+      ghostClass: 'sortable-ghost',
+      onStart: function () {
+        arrastando = true;
+      },
+      onEnd: function (evt) {
+        arrastando = false;
+        // Só calcula indentação quando a linha VEIO de fora da solução
+        if (evt.to === listaSolucao && evt.from !== listaSolucao && ultimaPosicaoX != null) {
+          const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
+          let limitesCaixa = listaSolucao.getBoundingClientRect();
+
+          let deslocamentoReal = ultimaPosicaoX - limitesCaixa.left - 20;
+          let nivelIndentacao = Math.max(0, Math.floor(deslocamentoReal / pxPerIndent));
+          nivelIndentacao = Math.min(nivelIndentacao, 4);
+
+          evt.item.style.marginLeft = (nivelIndentacao * pxPerIndent) + 'px';
+          evt.item.setAttribute('data-indent', nivelIndentacao);
+        }
+        ultimaPosicaoX = null;
+      }
+    });
+  });
+
+  const gabaritoOriginal = {{ gabarito_json|safe }};
+
+  const gabaritoPorId = {};
+  gabaritoOriginal.forEach(function (g) {
+    gabaritoPorId[g.id] = g;
+  });
+
+  function lerSolucao() {
+    const elementosSolucao = document.getElementById('area-solucao').querySelectorAll('.linha-codigo');
+    let solucao = [];
+
+    elementosSolucao.forEach(el => {
+      let valores = [];
+      el.querySelectorAll('.fade-input').forEach(input => {
+        valores.push(input.value.trim());
+      });
+      solucao.push({
+        id: parseInt(el.getAttribute('data-id')),
+        indent: parseInt(el.getAttribute('data-indent')) || 0,
+        valores: valores
+      });
+    });
+
+    return solucao;
+  }
+
+  function marcarPreenchimentoErrado(solucao) {
+    const elementos = document.getElementById('area-solucao').querySelectorAll('.linha-codigo');
+    elementos.forEach((el, index) => {
+      const linha = solucao[index];
+      const gabarito = gabaritoPorId[linha.id];
+      const inputs = el.querySelectorAll('.fade-input');
+      inputs.forEach((input, i) => {
+        const esperado = (gabarito.respostas[i] || '').trim();
+        const correto = input.value.trim() === esperado;
+        input.classList.toggle('input-errado', !correto);
+      });
+    });
+  }
+
+  function validarResposta() {
+    const solucao = lerSolucao();
+
+    const divMensagem = document.getElementById('mensagem');
+    divMensagem.classList.remove('show', 'sucesso', 'erro');
+    document.querySelectorAll('#area-solucao .fade-input.input-errado').forEach(inp => {
+      inp.classList.remove('input-errado');
+    });
+
+    setTimeout(() => {
+      let ordemOk = solucao.length === gabaritoOriginal.length &&
+        solucao.every((linha, i) => linha.id === gabaritoOriginal[i].id);
+
+      let indentOk = true;
+      let preenchOk = true;
+
+      if (ordemOk) {
+        solucao.forEach((linha, i) => {
+          if (linha.indent !== gabaritoOriginal[i].indent) {
+            indentOk = false;
+          }
+          if (!linha.valores.every((v, j) => v === (gabaritoOriginal[i].respostas[j] || ''))) {
+            preenchOk = false;
+          }
+        });
+      }
+
+      if (ordemOk && indentOk && preenchOk) {
+        divMensagem.innerHTML = "<strong>Perfeito!</strong> Ordem, indentação e trechos preenchidos estão corretos!";
+        divMensagem.classList.add('sucesso', 'show');
+      } else {
+        if (!ordemOk) {
+          divMensagem.innerHTML = "<strong>Estrutura incorreta.</strong> A ordem das linhas não confere com a solução esperada.";
+        } else if (!indentOk) {
+          divMensagem.innerHTML = "<strong>Estrutura incorreta.</strong> A ordem está certa, mas confira a indentação das linhas.";
+        } else {
+          divMensagem.innerHTML = "<strong>Quase lá!</strong> Ordem e indentação estão certas. Verifique os trechos destacados.";
+          marcarPreenchimentoErrado(solucao);
+        }
+        divMensagem.classList.add('erro', 'show');
+      }
+    }, 50);
+  }
+</script>
+{% endblock %} {% block javascript %}
+<script>
+  // Por enquanto não há log: modelagem (question_type "PF") ainda não definida.
+</script>
+{% endblock %}
