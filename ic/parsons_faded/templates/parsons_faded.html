@@ -433,29 +433,9 @@
       <h3>Blocos Disponíveis</h3>
       <div id="blocos-disponiveis" class="caixa">
         {% for linha in linhas_embaralhadas %}
-        <div class="linha-codigo" data-id="{{ linha.id }}" data-indent="0">
+        <div class="linha-codigo" data-id="{{ linha }}" data-indent="0">
           <i class="fa-solid fa-grip-vertical linha-grip"></i>
-          <span class="codigo-texto">
-            {% for p in linha.partes %} {% if p.tipo == 'texto' %}
-            <span class="seg-texto">{{ p.texto }}</span>
-            {% elif p.linha_inteira %}
-            <input
-              class="fade-input fade-input-linha"
-              data-resposta="{{ p.resposta }}"
-              placeholder="{{ p.placeholder }}"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            {% else %}
-            <input
-              class="fade-input"
-              data-resposta="{{ p.resposta }}"
-              placeholder="{{ p.placeholder }}"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            {% endif %} {% endfor %}
-          </span>
+          <span class="codigo-texto">{{ linha }} </span>
           <div class="indent-controls">
             <button
               class="indent-btn"

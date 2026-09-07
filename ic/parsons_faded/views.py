@@ -3,7 +3,7 @@ import random
 
 from django.shortcuts import redirect, render
 
-from .problems import PROBLEMAS, gabarito_de, get_problema_ou_404
+# from .problems import PROBLEMAS, gabarito_de, get_problema_ou_404
 
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -26,10 +26,18 @@ def parsons_faded_problem(request, problem_id):
     """
     problema = get_object_or_404(ProblemPF.objects.filter(question_type='F'), id=problem_id)
 
+    linhas = []
+    linhas_embaralhadas = []
     # linhas = problema['options']
     linhas = problema.options.splitlines()
-    linhas_embaralhadas = random.shuffle(linhas)
     # random.shuffle(linhas_embaralhadas)
+
+    for linha in linhas:
+        if not linha.strip():  # Ignora linhas totalmente vazias
+            continue
+        
+        texto_limpo = linha.strip()  
+        linhas_embaralhadas.append(texto_limpo)
 
     context = {
         'title': 'Parsons Faded',

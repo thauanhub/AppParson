@@ -29,3 +29,34 @@
 
 login: usuarioteste
 senha: 12345678.
+
+
+{% for linha in linhas_embaralhadas %}
+        <div
+          class="linha-codigo"
+          data-id="{{ linha.id }}"
+          data-indent="0"
+        >
+          <i class="fa-solid fa-grip-vertical linha-grip"></i>
+          <span class="codigo-texto">
+            {% for p in linha.partes %}
+              {% if p.tipo == 'texto' %}
+                <span class="seg-texto">{{ p.texto }}</span>
+              {% elif p.linha_inteira %}
+                <input
+                  class="fade-input fade-input-linha"
+                  data-resposta="{{ p.resposta }}"
+                  placeholder="{{ p.placeholder }}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              {% else %}
+                <input
+                  class="fade-input"
+                  data-resposta="{{ p.resposta }}"
+                  placeholder="{{ p.placeholder }}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              {% endif %}
+            {% endfor %}
