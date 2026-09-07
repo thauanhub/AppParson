@@ -8,6 +8,14 @@
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 />
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
 
 <style>
   .parsons-container {
@@ -406,6 +414,35 @@
     border: 1px solid #fecaca;
     box-shadow: 0 4px 6px -1px rgba(153, 27, 27, 0.1);
   }
+
+  .editor-container {
+    margin-top: 2rem;
+  }
+
+  .editor-container h3 {
+    color: #475569;
+  }
+
+  .CodeMirror {
+    min-height: 280px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font:
+      0.95rem "Fira Code",
+      "Courier New",
+      monospace;
+  }
+
+  #saida-codigo {
+    min-height: 3rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #e2e8f0;
+    white-space: pre-wrap;
+    font-family: "Fira Code", "Courier New", monospace;
+  }
 </style>
 
 <div class="parsons-container">
@@ -431,30 +468,7 @@
   <div class="workspace">
     <div class="workspace-column">
       <h3>Blocos Disponíveis</h3>
-      <div id="blocos-disponiveis" class="caixa">
-        {% for linha in linhas_embaralhadas %}
-        <div class="linha-codigo" data-id="{{ linha }}" data-indent="0">
-          <i class="fa-solid fa-grip-vertical linha-grip"></i>
-          <span class="codigo-texto">{{ linha }} </span>
-          <div class="indent-controls">
-            <button
-              class="indent-btn"
-              onclick="mudarIndentacao(this, -1)"
-              title="Diminuir indentação"
-            >
-              <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <button
-              class="indent-btn"
-              onclick="mudarIndentacao(this, 1)"
-              title="Aumentar indentação"
-            >
-              <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
+      <div id="blocos-disponiveis" class="caixa"></div>
     </div>
 
     <div class="workspace-column">
@@ -465,9 +479,15 @@
 
   <div class="action-container">
     <button class="btn-verificar" onclick="validarResposta()">
-      Verificar Código
+      Executar e verificar código
     </button>
     <div id="mensagem" class="feedback"></div>
+  </div>
+
+  <div class="editor-container">
+    <h3>Código gerado</h3>
+    <textarea id="editor-codigo"></textarea>
+    <pre id="saida-codigo">A saída da execução aparecerá aqui.</pre>
   </div>
 </div>
 
@@ -483,9 +503,100 @@
     // Calcula o espaçamento responsivo
     const pxPerIndent = window.innerWidth <= 768 ? 20 : 40;
     linha.style.marginLeft = (novoIndent * pxPerIndent) + 'px';
+    sincronizarEditor();
+  }
+
+  const blocos = {{ blocos_json|safe }};
+  const gabaritoOriginal = {{ gabarito_json|safe }};
+  let editorCodigo;
+
+  function criarBloco(bloco) {
+    const elemento = document.createElement('div');
+    elemento.className = 'linha-codigo';
+    elemento.dataset.id = bloco.id;
+    elemento.dataset.indent = '0';
+
+    const grip = document.createElement('i');
+    grip.className = 'fa-solid fa-grip-vertical linha-grip';
+    elemento.appendChild(grip);
+
+    const codigo = document.createElement('span');
+    codigo.className = 'codigo-texto';
+    bloco.partes.forEach(parte => {
+      if (parte.tipo === 'input') {
+        const input = document.createElement('input');
+        input.className = 'fade-input' + (parte.linha_inteira ? ' fade-input-linha' : '');
+        input.placeholder = parte.placeholder || 'Preencha o código';
+        input.dataset.answer = parte.resposta || '';
+        input.addEventListener('input', sincronizarEditor);
+        codigo.appendChild(input);
+      } else {
+        const texto = document.createElement('span');
+        texto.className = 'seg-texto';
+        texto.textContent = parte.texto || '';
+        codigo.appendChild(texto);
+      }
+    });
+    elemento.appendChild(codigo);
+
+    const controles = document.createElement('div');
+    controles.className = 'indent-controls';
+    controles.innerHTML = '<button class="indent-btn" type="button" title="Diminuir indentação"><i class="fa-solid fa-arrow-left"></i></button>' +
+      '<button class="indent-btn" type="button" title="Aumentar indentação"><i class="fa-solid fa-arrow-right"></i></button>';
+    controles.children[0].onclick = () => mudarIndentacao(controles.children[0], -1);
+    controles.children[1].onclick = () => mudarIndentacao(controles.children[1], 1);
+    elemento.appendChild(controles);
+    return elemento;
+  }
+
+  function renderizarBlocos() {
+    const disponiveis = document.getElementById('blocos-disponiveis');
+    [...blocos].sort(() => Math.random() - 0.5).forEach(bloco => {
+      disponiveis.appendChild(criarBloco(bloco));
+    });
+  }
+
+  function codigoGerado() {
+    return [...document.querySelectorAll('#area-solucao .linha-codigo')].map(el => {
+      const indent = '    '.repeat(parseInt(el.dataset.indent) || 0);
+      const bloco = blocos.find(item => String(item.id) === el.dataset.id);
+      let codigo = '';
+      let inputIndex = 0;
+      bloco.partes.forEach(parte => {
+        codigo += parte.tipo === 'input'
+          ? (el.querySelectorAll('.fade-input')[inputIndex++] || {}).value || ''
+          : parte.texto || '';
+      });
+      return indent + codigo;
+    }).join('\n');
+  }
+
+  function sincronizarEditor() {
+    if (editorCodigo) editorCodigo.setValue(codigoGerado());
+  }
+
+  function executarCodigo() {
+    const saida = document.getElementById('saida-codigo');
+    saida.textContent = '';
+    Sk.configure({
+      output: texto => { saida.textContent += texto; },
+      read: nome => {
+        if (Sk.builtinFiles === undefined || Sk.builtinFiles.files[nome] === undefined) {
+          throw new Error('Arquivo não encontrado: ' + nome);
+        }
+        return Sk.builtinFiles.files[nome];
+      },
+    });
+    return Sk.misceval.asyncToPromise(() => Sk.importMainWithBody(
+      '<parsons-faded>', false, editorCodigo.getValue(), true));
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    renderizarBlocos();
+    editorCodigo = CodeMirror.fromTextArea(document.getElementById('editor-codigo'), {
+      mode: 'python', lineNumbers: true, indentUnit: 4, tabSize: 4,
+    });
+    editorCodigo.on('change', () => {});
     const listaDisponivel = document.getElementById('blocos-disponiveis');
     const listaSolucao = document.getElementById('area-solucao');
     let ultimaPosicaoX = null;
@@ -558,6 +669,7 @@
           evt.item.style.marginLeft = '0px';
           evt.item.setAttribute('data-indent', 0);
         }
+        sincronizarEditor();
       }
     });
 
@@ -586,12 +698,11 @@
           evt.item.style.marginLeft = (nivelIndentacao * pxPerIndent) + 'px';
           evt.item.setAttribute('data-indent', nivelIndentacao);
         }
+        sincronizarEditor();
         ultimaPosicaoX = null;
       }
     });
   });
-
-  const gabaritoOriginal = {{ gabarito_json|safe }};
 
   const gabaritoPorId = {};
   gabaritoOriginal.forEach(function (g) {
@@ -640,39 +751,19 @@
       inp.classList.remove('input-errado');
     });
 
-    setTimeout(() => {
-      let ordemOk = solucao.length === gabaritoOriginal.length &&
-        solucao.every((linha, i) => linha.id === gabaritoOriginal[i].id);
+    if (!solucao.length || solucao.length !== blocos.length) {
+      divMensagem.innerHTML = '<strong>Complete a solução.</strong> Arraste todos os blocos para a área de solução.';
+      divMensagem.classList.add('erro', 'show');
+      return;
+    }
 
-      let indentOk = true;
-      let preenchOk = true;
-
-      if (ordemOk) {
-        solucao.forEach((linha, i) => {
-          if (linha.indent !== gabaritoOriginal[i].indent) {
-            indentOk = false;
-          }
-          if (!linha.valores.every((v, j) => v === (gabaritoOriginal[i].respostas[j] || ''))) {
-            preenchOk = false;
-          }
-        });
-      }
-
-      if (ordemOk && indentOk && preenchOk) {
-        divMensagem.innerHTML = "<strong>Perfeito!</strong> Ordem, indentação e trechos preenchidos estão corretos!";
-        divMensagem.classList.add('sucesso', 'show');
-      } else {
-        if (!ordemOk) {
-          divMensagem.innerHTML = "<strong>Estrutura incorreta.</strong> A ordem das linhas não confere com a solução esperada.";
-        } else if (!indentOk) {
-          divMensagem.innerHTML = "<strong>Estrutura incorreta.</strong> A ordem está certa, mas confira a indentação das linhas.";
-        } else {
-          divMensagem.innerHTML = "<strong>Quase lá!</strong> Ordem e indentação estão certas. Verifique os trechos destacados.";
-          marcarPreenchimentoErrado(solucao);
-        }
-        divMensagem.classList.add('erro', 'show');
-      }
-    }, 50);
+    executarCodigo().then(() => {
+      divMensagem.innerHTML = '<strong>Código executado.</strong> A solução foi montada e executada no CodeMirror.';
+      divMensagem.classList.add('sucesso', 'show');
+    }).catch(error => {
+      divMensagem.innerHTML = '<strong>Erro ao executar.</strong> ' + error.toString();
+      divMensagem.classList.add('erro', 'show');
+    });
   }
 </script>
 {% endblock %} {% block javascript %}

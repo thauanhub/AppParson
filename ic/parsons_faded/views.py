@@ -1,13 +1,79 @@
 import json
-import random
 
-from django.shortcuts import redirect, render
-
-# from .problems import PROBLEMAS, gabarito_de, get_problema_ou_404
-
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import ProblemPF, SolutionPF
+
+
+def _parts_from_line(line):
+    return [{'tipo': 'texto', 'texto': line}]
+
+
+def _normalizar_blocos(problema):
+    try:
+        dados = json.loads(problema.options or '[]')
+    except (TypeError, json.JSONDecodeError):
+        dados = [line for line in problema.options.splitlines() if line.strip()]
+
+    if isinstance(dados, dict):
+        dados = dados.get('blocos', dados.get('options', []))
+
+    solution = SolutionPF.objects.filter(problem=problema, ignore=False).first()
+    indentacoes = []
+    if solution:
+        indentacoes = [
+            (len(line) - len(line.lstrip())) // 4
+            for line in solution.content.splitlines()
+            if line.strip()
+        ]
+
+    blocos = []
+    for index, bloco in enumerate(dados):
+        if isinstance(bloco, str):
+            bloco = {'id': index + 1, 'partes': _parts_from_line(bloco)}
+
+        partes = bloco.get('partes', bloco.get('parts', []))
+        if isinstance(partes, str):
+            partes = _parts_from_line(partes)
+
+        partes_normalizadas = []
+        for parte in partes:
+            if isinstance(parte, str):
+                partes_normalizadas.append({'tipo': 'texto', 'texto': parte})
+                continue
+            tipo = parte.get('tipo', parte.get('type', 'texto'))
+            partes_normalizadas.append({
+                'tipo': tipo,
+                'texto': parte.get('texto', parte.get('text', '')),
+                'placeholder': parte.get('placeholder', 'Preencha o código'),
+                'resposta': parte.get('resposta', parte.get('answer', '')),
+                'linha_inteira': parte.get(
+                    'linha_inteira', parte.get('whole_line', False)),
+            })
+
+        bloco_id = bloco.get('id', index + 1)
+        blocos.append({
+            'id': bloco_id,
+            'indent': int(bloco.get('indent', indentacoes[index]
+                                  if index < len(indentacoes) else 0)),
+            'partes': partes_normalizadas,
+        })
+
+    return blocos
+
+
+def _gabarito(blocos):
+    return [
+        {
+            'id': bloco['id'],
+            'indent': bloco['indent'],
+            'respostas': [
+                parte['resposta'] for parte in bloco['partes']
+                if parte['tipo'] == 'input'
+            ],
+        }
+        for bloco in blocos
+    ]
 
 
 def parsons_faded_home(request):
@@ -16,35 +82,15 @@ def parsons_faded_home(request):
 
 
 def parsons_faded_problem(request, problem_id):
-    """
-    Protótipo visual de Parsons Faded com problemas estáticos.
-
-    A modelagem (novo question_type "PF" etc.) ainda não foi definida, então
-    os problemas ficam hardcoded em problems.py, sem banco de dados. Cada
-    linha (option) tem um id, a indentação esperada e partes (texto fixo ou
-    trecho apagado a ser preenchido).
-    """
     problema = get_object_or_404(ProblemPF.objects.filter(question_type='F'), id=problem_id)
-
-    linhas = []
-    linhas_embaralhadas = []
-    # linhas = problema['options']
-    linhas = problema.options.splitlines()
-    # random.shuffle(linhas_embaralhadas)
-
-    for linha in linhas:
-        if not linha.strip():  # Ignora linhas totalmente vazias
-            continue
-        
-        texto_limpo = linha.strip()  
-        linhas_embaralhadas.append(texto_limpo)
+    blocos = _normalizar_blocos(problema)
 
     context = {
         'title': 'Parsons Faded',
         'problema': problema,
-        'linhas_embaralhadas': linhas_embaralhadas,
-        # 'qtd_fades': sum(linha['tem_fade'] for linha in linhas),
-        'gabarito_json': json.dumps(linhas),
+        'blocos_json': json.dumps(blocos),
+        'gabarito_json': json.dumps(_gabarito(blocos)),
+        'testes_json': json.dumps(problema.test_case_generator or ''),
         'problemas_disponiveis': ProblemPF.objects.filter(question_type='F').order_by('id'),
     }
     return render(request, 'parsons_faded.html', context)
