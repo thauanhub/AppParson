@@ -438,10 +438,27 @@
     margin-top: 1rem;
     padding: 1rem;
     border-radius: 10px;
-    background: #0f172a;
-    color: #e2e8f0;
-    white-space: pre-wrap;
+    background: #dfdfdf;
+    color: #1f2937;
+  }
+
+  .teste-resultado {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.18);
     font-family: "Fira Code", "Courier New", monospace;
+    white-space: pre-wrap;
+  }
+
+  .teste-resultado:last-child {
+    border-bottom: none;
+  }
+
+  .teste-resultado.sucesso {
+    color: #004e1b;
+  }
+
+  .teste-resultado.erro {
+    color: #511919;
   }
 </style>
 
@@ -487,7 +504,7 @@
   <div class="editor-container">
     <h3>Código gerado</h3>
     <textarea id="editor-codigo"></textarea>
-    <pre id="saida-codigo">A saída da execução aparecerá aqui.</pre>
+    <div id="saida-codigo">A saída dos testes aparecerá aqui.</div>
   </div>
 </div>
 
@@ -508,6 +525,7 @@
 
   const blocos = {{ blocos_json|safe }};
   const gabaritoOriginal = {{ gabarito_json|safe }};
+  const testes = {{ testes_json|safe }};
   let editorCodigo;
 
   function criarBloco(bloco) {
@@ -575,11 +593,33 @@
     if (editorCodigo) editorCodigo.setValue(codigoGerado());
   }
 
-  function executarCodigo() {
-    const saida = document.getElementById('saida-codigo');
-    saida.textContent = '';
+  function obterTestes() {
+    const conteudo = testes.trim();
+    if (conteudo.startsWith('[')) {
+      try {
+        const testesJson = JSON.parse(conteudo);
+        return testesJson.map((teste, index) => ({
+          descricao: teste.descricao || teste.description || `Teste ${index + 1}`,
+          codigo: teste.codigo || teste.code || teste,
+          chamada: teste.chamada || teste.call || '',
+          esperado: teste.esperado ?? teste.expected ?? '',
+        }));
+      } catch (error) {
+        return [{ descricao: 'Testes da questão', codigo: conteudo }];
+      }
+    }
+    return [{ descricao: 'Testes da questão', codigo: conteudo, chamada: '', esperado: '' }];
+  }
+
+  function executarTeste(codigoAluno, teste) {
+    let saidaTeste = '';
+    const marcador = '__PARSONS_RESULTADO__';
+    const linhaResultado = teste.chamada
+      ? `\nprint(${JSON.stringify(marcador)} + str(${teste.chamada}))`
+      : '';
+    const codigoExecutado = codigoAluno + linhaResultado + '\n\n' + teste.codigo;
     Sk.configure({
-      output: texto => { saida.textContent += texto; },
+      output: texto => { saidaTeste += texto; },
       read: nome => {
         if (Sk.builtinFiles === undefined || Sk.builtinFiles.files[nome] === undefined) {
           throw new Error('Arquivo não encontrado: ' + nome);
@@ -587,8 +627,58 @@
         return Sk.builtinFiles.files[nome];
       },
     });
+    const extrairResultado = () =>
+      saidaTeste.split(marcador)[1]?.split('\n')[0]?.trim() || '';
     return Sk.misceval.asyncToPromise(() => Sk.importMainWithBody(
-      '<parsons-faded>', false, editorCodigo.getValue(), true));
+      '<parsons-faded>', false, codigoExecutado, true)).then(() => ({
+        saida: saidaTeste,
+        resultado: extrairResultado(),
+      })).catch(error => {
+        error.resultado = extrairResultado();
+        throw error;
+      });
+  }
+
+  async function executarTestes() {
+    const resultados = [];
+    const codigoAluno = editorCodigo.getValue();
+    for (const teste of obterTestes()) {
+      try {
+        const execucao = await executarTeste(codigoAluno, teste);
+        resultados.push({
+          sucesso: true,
+          descricao: teste.descricao,
+          chamada: teste.chamada,
+          esperado: teste.esperado,
+          resultado: execucao.resultado,
+        });
+      } catch (error) {
+        resultados.push({
+          sucesso: false,
+          descricao: teste.descricao,
+          chamada: teste.chamada,
+          esperado: teste.esperado,
+          resultado: error.resultado || '',
+          erro: error.toString(),
+        });
+      }
+    }
+    return resultados;
+  }
+
+  function mostrarResultados(resultados) {
+    const saida = document.getElementById('saida-codigo');
+    saida.replaceChildren();
+    resultados.forEach(resultado => {
+      const linha = document.createElement('div');
+      linha.className = 'teste-resultado ' + (resultado.sucesso ? 'sucesso' : 'erro');
+      const chamada = resultado.chamada || resultado.descricao;
+      const valorObtido = resultado.resultado || 'nenhum resultado';
+      linha.textContent = resultado.sucesso
+        ? `${chamada} retornou ${valorObtido}`
+        : `${chamada} retornou ${valorObtido}\n${chamada} retorna ${resultado.esperado || 'um valor válido'}${resultado.erro ? '\n' + resultado.erro : ''}`;
+      saida.appendChild(linha);
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -757,11 +847,25 @@
       return;
     }
 
-    executarCodigo().then(() => {
-      divMensagem.innerHTML = '<strong>Código executado.</strong> A solução foi montada e executada no CodeMirror.';
-      divMensagem.classList.add('sucesso', 'show');
+    if (!testes.trim()) {
+      divMensagem.innerHTML = '<strong>Testes não cadastrados.</strong> Preencha o campo test_case_generator desta questão.';
+      divMensagem.classList.add('erro', 'show');
+      return;
+    }
+
+    executarTestes().then(resultados => {
+      mostrarResultados(resultados);
+      const passou = resultados.every(resultado => resultado.sucesso);
+      if (passou) {
+        divMensagem.innerHTML = '<strong>Resposta correta.</strong> Todos os testes passaram.';
+        divMensagem.classList.add('sucesso', 'show');
+      } else {
+        divMensagem.innerHTML = '<strong>Resposta incorreta.</strong> Confira os testes que falharam.';
+        divMensagem.classList.add('erro', 'show');
+      }
     }).catch(error => {
-      divMensagem.innerHTML = '<strong>Erro ao executar.</strong> ' + error.toString();
+      document.getElementById('saida-codigo').textContent = error.toString();
+      divMensagem.innerHTML = '<strong>Erro ao executar os testes.</strong> ' + error.toString();
       divMensagem.classList.add('erro', 'show');
     });
   }
