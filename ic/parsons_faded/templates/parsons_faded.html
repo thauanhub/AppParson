@@ -159,8 +159,7 @@
 
   .linha-codigo:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-    border-left-color: #0ea5e9;
+    border-left-color: #e2e8f0;
   }
 
   .linha-codigo:active {
@@ -468,7 +467,7 @@
       <a class="button-secondary" href="{% url 'parsons_faded_home' %}"
         >Voltar ao início</a
       >
-      <div class="exemplo-nav">
+      <!-- <div class="exemplo-nav">
         {% for p in problemas_disponiveis %}
         <a
           class="exemplo-link{% if p.id == problema.id %} exemplo-ativo{% endif %}"
@@ -476,7 +475,7 @@
           >Exemplo {{ p.id }}: {{ p.title }}</a
         >
         {% endfor %}
-      </div>
+      </div> -->
     </div>
     <h2>Desafio: {{ problema.title }}</h2>
     <p>{{ problema.content }}</p>

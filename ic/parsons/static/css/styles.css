@@ -2610,7 +2610,6 @@ no base.html botei a tag meta*/
   .linha-codigo:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-    border-left-color: #60a5fa;
   }
 
   .linha-codigo:active {
