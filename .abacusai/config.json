@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python manage.py check 2>&1)",
-      "Bash(Set-Location \"ic\"; python manage.py check 2>&1)",
-      "Bash(Set-Location \"E:\\OneDrive - edu.unirio.br\\Unirio BSI\\IC - Machine Teaching\\ModeloParson\\AppParson\\ic\"; python manage.py check 2>&1 | Select-Object -Last 3)"
-    ]
-  }
-}
