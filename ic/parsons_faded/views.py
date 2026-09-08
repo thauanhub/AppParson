@@ -1,8 +1,7 @@
 import json
-
 from django.shortcuts import get_object_or_404, redirect, render
-
 from .models import ProblemPF, SolutionPF
+from django.contrib.auth.decorators import login_required
 
 
 def _parts_from_line(line):
@@ -75,12 +74,12 @@ def _gabarito(blocos):
         for bloco in blocos
     ]
 
-
+@login_required
 def parsons_faded_home(request):
     """Raiz do protótipo: leva direto ao primeiro exemplo."""
     return redirect('parsons_faded_problem', problem_id=1)
 
-
+@login_required
 def parsons_faded_problem(request, problem_id):
     problema = get_object_or_404(ProblemPF.objects.filter(question_type='F'), id=problem_id)
     blocos = _normalizar_blocos(problema)
