@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <div class="parsons-home">
+    <div class="parsons-home-nav">
+      <a class="button-secondary" href="{% url 'login' %}">Voltar para login</a>
+    </div>
+    <h1>Parsons Faded Problems</h1>
+    {% if problemas %}
+      <ul class="parsons-list">
+        {% for problema in problemas %}
+          <li>
+            <a href="{% url 'parsons_faded_problem' problema.id %}">{{ problema.id }} - {{ problema.title }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Não há problemas Parsons Faded disponíveis.</p>
+    {% endif %}
+  </div>
+{% endblock %}

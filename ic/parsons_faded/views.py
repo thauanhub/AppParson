@@ -1,5 +1,5 @@
 import json
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 from .models import ProblemPF, SolutionPF
 from django.contrib.auth.decorators import login_required
 
@@ -76,8 +76,8 @@ def _gabarito(blocos):
 
 @login_required
 def parsons_faded_home(request):
-    """Raiz do protótipo: leva direto ao primeiro exemplo."""
-    return redirect('parsons_faded_problem', problem_id=1)
+    problemas = ProblemPF.objects.filter(question_type='F').order_by('id')
+    return render(request, 'parsons_faded_home.html', {'problemas': problemas})
 
 @login_required
 def parsons_faded_problem(request, problem_id):
