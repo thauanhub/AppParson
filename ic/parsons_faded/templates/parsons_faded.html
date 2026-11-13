@@ -471,8 +471,8 @@
         {% for p in problemas_disponiveis %}
         <a
           class="exemplo-link{% if p.id == problema.id %} exemplo-ativo{% endif %}"
-          href="{% url 'parsons_faded_problem' p.id %}"
-          >Exemplo {{ p.id }}: {{ p.title }}</a
+          href="{% url 'parsons_faded_problem' p.faded_id|default:p.id %}"
+          >Exemplo {{ p.faded_id|default:p.id }}: {{ p.title }}</a
         >
         {% endfor %}
       </div> -->

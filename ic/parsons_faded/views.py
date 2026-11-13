@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import get_object_or_404, render
-from .models import ProblemPF, SolutionPF
+from parsons.models import Problem, Solution
 from django.contrib.auth.decorators import login_required
 
 
@@ -17,7 +17,7 @@ def _normalizar_blocos(problema):
     if isinstance(dados, dict):
         dados = dados.get('blocos', dados.get('options', []))
 
-    solution = SolutionPF.objects.filter(problem=problema, ignore=False).first()
+    solution = Solution.objects.filter(problem=problema, ignore=False).first()
     indentacoes = []
     if solution:
         indentacoes = [
@@ -76,12 +76,16 @@ def _gabarito(blocos):
 
 @login_required
 def parsons_faded_home(request):
-    problemas = ProblemPF.objects.filter(question_type='F').order_by('id')
+    problemas = Problem.objects.filter(question_type='F').order_by('faded_id', 'id')
     return render(request, 'parsons_faded_home.html', {'problemas': problemas})
 
 @login_required
 def parsons_faded_problem(request, problem_id):
-    problema = get_object_or_404(ProblemPF.objects.filter(question_type='F'), id=problem_id)
+    problema = Problem.objects.filter(
+        question_type='F', faded_id=problem_id).first()
+    if problema is None:
+        problema = get_object_or_404(
+            Problem, id=problem_id, question_type='F')
     blocos = _normalizar_blocos(problema)
 
     context = {
@@ -90,6 +94,7 @@ def parsons_faded_problem(request, problem_id):
         'blocos_json': json.dumps(blocos),
         'gabarito_json': json.dumps(_gabarito(blocos)),
         'testes_json': json.dumps(problema.test_case_generator or ''),
-        'problemas_disponiveis': ProblemPF.objects.filter(question_type='F').order_by('id'),
+        'problemas_disponiveis': Problem.objects.filter(
+            question_type='F').order_by('faded_id', 'id'),
     }
     return render(request, 'parsons_faded.html', context)

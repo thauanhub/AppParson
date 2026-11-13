@@ -37,7 +37,8 @@ class Problem(models.Model):
     QUESTION_TYPES = (("C", "Code"),
                       ("M", "Multiple Choice"),
                       ("T", "Text"),
-                      ("P", "Parsons Problem"))
+                      ("P", "Parsons Problem"),
+                      ("F", "Parsons Faded Problem"))
 
     question_type = models.CharField(max_length=2, choices=QUESTION_TYPES,
                                      default="C")
@@ -49,6 +50,7 @@ class Problem(models.Model):
     retrieved_date = models.DateTimeField(blank=True, auto_now_add=True)
     crawler = models.CharField(max_length=200, blank=True)
     hint = models.TextField(blank=True)
+    faded_id = models.PositiveIntegerField(blank=True, null=True, unique=True)
     objects = ProblemManager()
     chapter = models.ManyToManyField(Chapter, through='ExerciseSet')
     test_case_generator = models.TextField(blank=True, null=True)
@@ -142,6 +144,7 @@ class Solution(models.Model):
     ignore = models.BooleanField(default=False)
     tip = models.TextField(blank=True,
                            default="#Start your python function here")
+    faded_id = models.PositiveIntegerField(blank=True, null=True, unique=True)
     cluster = models.ForeignKey(Cluster, on_delete=models.SET_NULL,
                                 null=True, blank=True)
     #Linguagens de programação
